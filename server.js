@@ -82,12 +82,24 @@ const connectDB = async () => {
 
 // Import Routes & Middleware
 const authRoutes = require("./routes/auth");
+const noteRoutes = require("./routes/noteRoutes");
 const authMiddleware = require("./middleware/auth");
 
 // Mount Routes with logging
 console.log("Mounting routes...");
+
+// Mount auth routes first
 app.use("/api/auth", authRoutes);
-console.log("Auth routes mounted");
+console.log("Auth routes mounted at /api/auth");
+
+// Mount note routes
+app.use("/api/notes", noteRoutes); // Remove authMiddleware temporarily for testing
+console.log("Note routes mounted at /api/notes");
+
+// Test route to verify routing
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working" });
+});
 
 // Protected Routes
 app.use("/api/protected", authMiddleware, (req, res) => {
