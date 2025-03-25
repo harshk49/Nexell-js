@@ -68,8 +68,6 @@ const authLimiter = rateLimit({
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
@@ -83,6 +81,7 @@ const connectDB = async () => {
 // Import Routes & Middleware
 const authRoutes = require("./routes/auth");
 const noteRoutes = require("./routes/noteRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 const authMiddleware = require("./middleware/auth");
 
 // Mount Routes with logging
@@ -93,8 +92,12 @@ app.use("/api/auth", authRoutes);
 console.log("Auth routes mounted at /api/auth");
 
 // Mount note routes
-app.use("/api/notes", noteRoutes); // Remove authMiddleware temporarily for testing
+app.use("/api/notes", noteRoutes);
 console.log("Note routes mounted at /api/notes");
+
+// Mount task routes
+app.use("/api/tasks", taskRoutes);
+console.log("Task routes mounted at /api/tasks");
 
 // Test route to verify routing
 app.get("/api/test", (req, res) => {
