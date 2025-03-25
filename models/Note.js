@@ -99,5 +99,12 @@ NoteSchema.index({ owner: 1, isArchived: 1 });
 NoteSchema.index({ owner: 1, isPinned: 1 });
 NoteSchema.index({ owner: 1, category: 1 });
 NoteSchema.index({ tags: 1 });
+NoteSchema.index({ owner: 1, createdAt: -1 });
+NoteSchema.index({ owner: 1, updatedAt: -1 });
+NoteSchema.index({ title: "text", content: "text" });
+NoteSchema.index({ owner: 1, isArchived: 1, isPinned: 1 });
+NoteSchema.index({ owner: 1, category: 1, isArchived: 1 });
+NoteSchema.index({ owner: 1, tags: 1, isArchived: 1 });
+NoteSchema.index({ owner: 1, "reminder.date": 1, "reminder.isEnabled": 1 });
 
 module.exports = mongoose.model("Note", NoteSchema);

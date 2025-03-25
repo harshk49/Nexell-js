@@ -121,5 +121,20 @@ TaskSchema.index({ owner: 1, priority: 1 });
 TaskSchema.index({ owner: 1, category: 1 });
 TaskSchema.index({ assignedTo: 1 });
 TaskSchema.index({ tags: 1 });
+TaskSchema.index({ owner: 1, createdAt: -1 });
+TaskSchema.index({ owner: 1, updatedAt: -1 });
+TaskSchema.index({ title: "text", description: "text" });
+TaskSchema.index({ owner: 1, status: 1, dueDate: 1 });
+TaskSchema.index({ owner: 1, status: 1, priority: 1 });
+TaskSchema.index({ owner: 1, isArchived: 1, isPinned: 1 });
+TaskSchema.index({ owner: 1, category: 1, status: 1 });
+TaskSchema.index({ owner: 1, assignedTo: 1, status: 1 });
+TaskSchema.index({
+  owner: 1,
+  "recurring.isRecurring": 1,
+  "recurring.frequency": 1,
+});
+TaskSchema.index({ owner: 1, startDate: 1, status: 1 });
+TaskSchema.index({ owner: 1, completedAt: 1, status: 1 });
 
 module.exports = mongoose.model("Task", TaskSchema);

@@ -51,12 +51,61 @@ router.post("/", authMiddleware, validateNote, async (req, res) => {
 // 📌 GET All Notes for Logged-in User (GET /api/notes)
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const notes = await Note.find({ owner: req.user.userId }).sort({
-      createdAt: -1,
-    });
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+      category,
+      isPinned,
+      isArchived,
+      tags,
+      search,
+    } = req.query;
+
+    // Build query
+    const query = { owner: req.user.userId };
+
+    // Apply filters
+    if (category) query.category = category;
+    if (isPinned !== undefined) query.isPinned = isPinned === "true";
+    if (isArchived !== undefined) query.isArchived = isArchived === "true";
+    if (tags) query.tags = { $in: Array.isArray(tags) ? tags : [tags] };
+
+    // Add text search if provided
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+    // Execute query with pagination
+    const notes = await Note.find(query)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .select(
+        "title content createdAt updatedAt isPinned isArchived category tags color"
+      )
+      .lean();
+
+    // Get total count for pagination
+    const total = await Note.countDocuments(query);
+
     res.json({
       message: "Notes retrieved successfully",
       notes,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limit),
+        limit: parseInt(limit),
+      },
     });
   } catch (error) {
     console.error("Note fetch error:", error);
