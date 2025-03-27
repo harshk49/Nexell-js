@@ -1,0 +1,25 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies including development dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Set environment variables
+ENV NODE_ENV=development
+
+# Expose ports
+EXPOSE 5000
+EXPOSE 9229
+
+# Start the application with nodemon
+CMD ["npm", "run", "dev"] 

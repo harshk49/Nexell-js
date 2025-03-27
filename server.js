@@ -12,17 +12,31 @@ const mongoSanitize = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
 const xss = require("xss-clean");
 const hpp = require("hpp");
+const path = require("path");
+const logger = require("./utils/logger");
 
 const app = express();
 
 // Security Middleware
-app.use(helmet()); // Set security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production",
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
+// CORS configuration
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Security middleware
 app.use(xss()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 app.use(mongoSanitize()); // Prevent NoSQL injection
@@ -31,16 +45,18 @@ app.use(cookieParser());
 
 // Performance Middleware
 app.use(compression()); // Compress responses
-app.use(morgan("dev")); // Logs HTTP requests
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev")); // Logs HTTP requests
 
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  max: process.env.NODE_ENV === "production" ? 100 : 1000, // Different limits for prod/dev
   message: {
     message: "Too many requests from this IP, please try again later.",
     error: "RATE_LIMIT_EXCEEDED",
   },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Apply rate limiting to all routes
@@ -54,6 +70,8 @@ const authLimiter = rateLimit({
     message: "Too many login attempts, please try again later.",
     error: "AUTH_RATE_LIMIT_EXCEEDED",
   },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Connect to MongoDB
@@ -62,10 +80,16 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      retryWrites: true,
+      w: "majority",
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error("MongoDB Connection Failed:", error);
+    logger.error("MongoDB Connection Failed:", error);
     process.exit(1);
   }
 };
@@ -83,27 +107,25 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/user", userRoutes);
 
-// Test route to verify routing
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API is working" });
-});
-
-// Protected Routes
-app.use("/api/protected", authMiddleware, (req, res) => {
-  res.json({
-    message: "This is a protected route.",
-    user: req.user,
-  });
-});
-
 // Health Check Route
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Server is healthy",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    uptime: process.uptime(),
   });
 });
+
+// Serve static files in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "public")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "public", "index.html"));
+  });
+}
 
 // 404 Handler
 app.use((req, res) => {
@@ -115,22 +137,62 @@ app.use((req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
-    error: err.code || "INTERNAL_SERVER_ERROR",
+  logger.error("Error:", err);
+
+  // Default error
+  let statusCode = err.statusCode || 500;
+  let message = err.message || "Internal Server Error";
+
+  // Mongoose validation error
+  if (err.name === "ValidationError") {
+    statusCode = 400;
+    message = Object.values(err.errors)
+      .map((val) => val.message)
+      .join(", ");
+  }
+
+  // Mongoose duplicate key error
+  if (err.code === 11000) {
+    statusCode = 400;
+    message = "Duplicate field value entered";
+  }
+
+  // JWT errors
+  if (err.name === "JsonWebTokenError") {
+    statusCode = 401;
+    message = "Invalid token";
+  }
+
+  if (err.name === "TokenExpiredError") {
+    statusCode = 401;
+    message = "Token expired";
+  }
+
+  res.status(statusCode).json({
+    success: false,
+    error: message,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
 
 // Start Server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(
+    `Server running on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`
+  );
 });
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
-  console.error("Unhandled Promise Rejection:", err);
+  logger.error("Unhandled Promise Rejection:", err);
+  // Close server & exit process
+  server.close(() => process.exit(1));
+});
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught Exception:", err);
   // Close server & exit process
   server.close(() => process.exit(1));
 });
