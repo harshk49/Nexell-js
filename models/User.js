@@ -31,6 +31,7 @@ const userSchema = new Schema(
         type: String,
         enum: ["light", "dark", "system"],
         default: "system",
+        required: true,
       },
       notifications: { type: Boolean, default: true },
       taskView: {

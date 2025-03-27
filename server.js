@@ -15,14 +15,6 @@ const hpp = require("hpp");
 
 const app = express();
 
-// Debug Middleware (move this before other middleware)
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log("Headers:", req.headers);
-  console.log("Body:", req.body);
-  next();
-});
-
 // Security Middleware
 app.use(helmet()); // Set security headers
 app.use(
@@ -71,9 +63,9 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error("❌ MongoDB Connection Failed:", error);
+    console.error("MongoDB Connection Failed:", error);
     process.exit(1);
   }
 };
@@ -82,22 +74,14 @@ const connectDB = async () => {
 const authRoutes = require("./routes/auth");
 const noteRoutes = require("./routes/noteRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const userRoutes = require("./routes/userRoutes");
 const authMiddleware = require("./middleware/auth");
 
-// Mount Routes with logging
-console.log("Mounting routes...");
-
-// Mount auth routes first
+// Mount Routes
 app.use("/api/auth", authRoutes);
-console.log("Auth routes mounted at /api/auth");
-
-// Mount note routes
 app.use("/api/notes", noteRoutes);
-console.log("Note routes mounted at /api/notes");
-
-// Mount task routes
 app.use("/api/tasks", taskRoutes);
-console.log("Task routes mounted at /api/tasks");
+app.use("/api/user", userRoutes);
 
 // Test route to verify routing
 app.get("/api/test", (req, res) => {
@@ -141,8 +125,7 @@ app.use((err, req, res, next) => {
 // Start Server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 // Handle unhandled promise rejections
