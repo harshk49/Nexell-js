@@ -84,8 +84,6 @@ const connectDB = async () => {
       minPoolSize: 5,
       retryWrites: true,
       w: "majority",
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
     });
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
@@ -118,12 +116,21 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Serve static files in production
+// Serve static files only in production
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "public")));
+  const publicPath = path.join(__dirname, "public");
+  app.use(express.static(publicPath));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "public", "index.html"));
+  // Handle 404 for static files
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/public/")) {
+      res.status(404).json({
+        status: "error",
+        message: "Static file not found",
+      });
+    } else {
+      next();
+    }
   });
 }
 
