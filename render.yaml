@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: tasks-notes-backend
+    env: node
+    buildCommand: npm ci
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_FORMAT
+        value: combined
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: AUTH_RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: AUTH_RATE_LIMIT_MAX_REQUESTS
+        value: 5
+      - key: ENABLE_SECURITY_HEADERS
+        value: true
+      - key: ENABLE_CORS
+        value: true
+      - key: ENABLE_RATE_LIMIT
+        value: true
+      - key: ENABLE_COMPRESSION
+        value: true
+      - key: ENABLE_LOGGING
+        value: true
+      - key: ENABLE_HEALTH_CHECK
+        value: true
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=512
+    healthCheckPath: /health
+    autoDeploy: true
+
+  - type: pserv
+    name: tasks-notes-mongodb
+    env: docker
+    dockerfilePath: ./Dockerfile.mongodb
+    disk:
+      name: mongodb-data
+      mountPath: /data/db
+      sizeGB: 10
+    envVars:
+      - key: MONGO_INITDB_ROOT_USERNAME
+        sync: false
+      - key: MONGO_INITDB_ROOT_PASSWORD
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
