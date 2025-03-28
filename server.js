@@ -78,12 +78,14 @@ const authLimiter = rateLimit({
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased timeout for Atlas
       socketTimeoutMS: 45000,
       maxPoolSize: 10,
       minPoolSize: 5,
       retryWrites: true,
       w: "majority",
+      ssl: true, // Enable SSL for Atlas
+      tlsAllowInvalidCertificates: false, // Ensure valid SSL certificates
     });
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
