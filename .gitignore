@@ -6,6 +6,12 @@ package-lock.json
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+.env.test
+.env.*
+!.env.example
+!.env.production.example
 
 # Logs
 logs/
@@ -13,6 +19,9 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+access.log
+error.log
+combined.log
 
 # Runtime data
 pids/
@@ -22,32 +31,72 @@ pids/
 
 # Directory for uploaded files
 uploads/
+media/
+files/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+*.swn
+*.bak
+*.tmp
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Build output
 dist/
 build/
 coverage/
+.next/
+out/
 
 # Temporary files
 tmp/
 temp/
+.cache/
 
 # Debug
 .debug/
+debug.log
 
 # Production
 public/
+build/
+release/
 
 # Docker
 .docker/
 docker-compose.override.yml
+*.env.docker
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+*.csr
+*.srl
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Local development
+.local/
+*.local
+local.*
