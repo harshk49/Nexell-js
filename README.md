@@ -1,34 +1,229 @@
-# Tasks & Notes App Backend
+# TaskNexus - Task and Note Management API
 
-A robust backend API for managing tasks and notes with user authentication and preferences.
+A robust RESTful API for managing tasks and notes, built with Node.js, Express, and MongoDB.
 
-## Features
+## 🌐 Live API
 
-- User authentication with JWT
-- Task management with categories and priorities
-- Note management with rich text support
-- User preferences (theme, notifications, view options)
-- Rate limiting and security features
-- Comprehensive error handling
-- Production-ready logging
-- Docker support for development and production
+The API is now live and available at:
 
-## Prerequisites
+```
+https://tasknexus-backend.onrender.com
+```
+
+## 🚀 Features
+
+- User Authentication (JWT)
+- Task Management
+- Note Management
+- User Profile Management
+- Rate Limiting
+- Security Features
+- Error Handling
+- Logging System
+
+## 🛠️ Tech Stack
+
+- Node.js
+- Express.js
+- MongoDB
+- JWT Authentication
+- Winston Logger
+- Jest (Testing)
+
+## 📝 API Documentation
+
+### Base URL
+
+```
+https://tasknexus-backend.onrender.com
+```
+
+### Authentication Routes
+
+```bash
+# Register User
+POST /api/auth/register
+Headers:
+  Content-Type: application/json
+Body:
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+# Login User
+POST /api/auth/login
+Headers:
+  Content-Type: application/json
+Body:
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+# Logout User
+POST /api/auth/logout
+Headers:
+  Authorization: Bearer <your_jwt_token>
+```
+
+### Notes Routes
+
+```bash
+# Get All Notes
+GET /api/notes
+Headers:
+  Authorization: Bearer <your_jwt_token>
+
+# Create Note
+POST /api/notes
+Headers:
+  Authorization: Bearer <your_jwt_token>
+  Content-Type: application/json
+Body:
+{
+  "title": "My Note",
+  "content": "Note content here",
+  "color": "#ff0000"
+}
+
+# Get Single Note
+GET /api/notes/:id
+Headers:
+  Authorization: Bearer <your_jwt_token>
+
+# Update Note
+PUT /api/notes/:id
+Headers:
+  Authorization: Bearer <your_jwt_token>
+  Content-Type: application/json
+Body:
+{
+  "title": "Updated Note",
+  "content": "Updated content",
+  "color": "#00ff00"
+}
+
+# Delete Note
+DELETE /api/notes/:id
+Headers:
+  Authorization: Bearer <your_jwt_token>
+```
+
+### Tasks Routes
+
+```bash
+# Get All Tasks
+GET /api/tasks
+Headers:
+  Authorization: Bearer <your_jwt_token>
+
+# Create Task
+POST /api/tasks
+Headers:
+  Authorization: Bearer <your_jwt_token>
+  Content-Type: application/json
+Body:
+{
+  "title": "My Task",
+  "description": "Task description",
+  "dueDate": "2024-03-30",
+  "priority": "high",
+  "status": "pending"
+}
+
+# Get Single Task
+GET /api/tasks/:id
+Headers:
+  Authorization: Bearer <your_jwt_token>
+
+# Update Task
+PUT /api/tasks/:id
+Headers:
+  Authorization: Bearer <your_jwt_token>
+  Content-Type: application/json
+Body:
+{
+  "title": "Updated Task",
+  "description": "Updated description",
+  "dueDate": "2024-03-31",
+  "priority": "medium",
+  "status": "in-progress"
+}
+
+# Delete Task
+DELETE /api/tasks/:id
+Headers:
+  Authorization: Bearer <your_jwt_token>
+```
+
+### User Routes
+
+```bash
+# Get User Profile
+GET /api/user/profile
+Headers:
+  Authorization: Bearer <your_jwt_token>
+
+# Update User Profile
+PUT /api/user/profile
+Headers:
+  Authorization: Bearer <your_jwt_token>
+  Content-Type: application/json
+Body:
+{
+  "username": "newusername",
+  "email": "newemail@example.com"
+}
+
+# Change Password
+PUT /api/user/change-password
+Headers:
+  Authorization: Bearer <your_jwt_token>
+  Content-Type: application/json
+Body:
+{
+  "currentPassword": "oldpassword",
+  "newPassword": "newpassword"
+}
+```
+
+### Health Check
+
+```bash
+# Check API Health
+GET /health
+Headers:
+  None
+```
+
+## 🔒 Security Features
+
+- JWT Authentication
+- Password Hashing
+- Rate Limiting
+- CORS Protection
+- XSS Protection
+- NoSQL Injection Protection
+- HTTP Parameter Pollution Protection
+- Security Headers (Helmet)
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Node.js >= 18.0.0
-- MongoDB >= 4.4
+- MongoDB
 - npm or yarn
-- Docker and Docker Compose (optional)
 
-## Installation
-
-### Without Docker
+### Installation
 
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd tasks-notes-app
+git clone https://github.com/harshk49/TaskNexus-js.git
+cd TaskNexus-js
 ```
 
 2. Install dependencies:
@@ -37,218 +232,60 @@ cd tasks-notes-app
 npm install
 ```
 
-3. Create environment file:
+3. Create a `.env` file in the root directory:
 
-```bash
-cp .env.example .env
+```env
+NODE_ENV=development
+PORT=5000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
 ```
 
-4. Update the `.env` file with your configuration values.
-
-### With Docker
-
-1. Clone the repository:
-
-```bash
-git clone <repository-url>
-cd tasks-notes-app
-```
-
-2. Create environment file:
-
-```bash
-cp .env.example .env
-```
-
-3. Update the `.env` file with your configuration values.
-
-## Development
-
-### Without Docker
-
-Run the development server:
+4. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-### With Docker
+## 🧪 Testing
 
-Start the development environment:
-
-```bash
-docker-compose -f docker-compose.dev.yml up --build
-```
-
-The application will be available at `http://localhost:5000` with hot-reloading enabled.
-
-## Production Deployment
-
-### Without Docker
-
-1. Set up environment variables:
+Run tests:
 
 ```bash
-# Create .env file with production values
-cp .env.example .env
-# Edit .env with production values
+npm test
 ```
 
-2. Install production dependencies:
+## 📝 Environment Variables
 
-```bash
-npm install --production
+```env
+NODE_ENV=development
+PORT=5000
+MONGO_URI=mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:3000
+LOG_LEVEL=info
+LOG_FORMAT=combined
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX_REQUESTS=5
+ENABLE_SECURITY_HEADERS=true
+ENABLE_CORS=true
+ENABLE_RATE_LIMIT=true
+ENABLE_COMPRESSION=true
+ENABLE_LOGGING=true
+ENABLE_HEALTH_CHECK=true
 ```
 
-3. Start the production server:
+## 📄 License
 
-```bash
-npm run prod
-```
+This project is licensed under the ISC License.
 
-### With Docker
+## 👥 Author
 
-1. Set up environment variables:
+Harsh Kardile
 
-```bash
-# Create .env file with production values
-cp .env.example .env
-# Edit .env with production values
-```
+## 🤝 Contributing
 
-2. Build and start the containers:
-
-```bash
-docker-compose up --build -d
-```
-
-The application will be available at `http://localhost:5000`.
-
-## Docker Commands
-
-### Development
-
-- Start development environment:
-
-```bash
-docker-compose -f docker-compose.dev.yml up --build
-```
-
-- Stop development environment:
-
-```bash
-docker-compose -f docker-compose.dev.yml down
-```
-
-- View logs:
-
-```bash
-docker-compose -f docker-compose.dev.yml logs -f
-```
-
-### Production
-
-- Start production environment:
-
-```bash
-docker-compose up -d
-```
-
-- Stop production environment:
-
-```bash
-docker-compose down
-```
-
-- View logs:
-
-```bash
-docker-compose logs -f
-```
-
-- Rebuild containers:
-
-```bash
-docker-compose up --build -d
-```
-
-## Environment Variables
-
-Required environment variables:
-
-- `NODE_ENV`: Environment (development/production)
-- `PORT`: Server port
-- `MONGO_URI`: MongoDB connection string
-- `JWT_SECRET`: Secret key for JWT tokens
-- `JWT_EXPIRES_IN`: JWT token expiration time
-- `CLIENT_URL`: Frontend application URL (for CORS)
-
-## API Endpoints
-
-### Authentication
-
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
-
-### Tasks
-
-- `GET /api/tasks` - Get all tasks
-- `POST /api/tasks` - Create new task
-- `GET /api/tasks/:id` - Get single task
-- `PUT /api/tasks/:id` - Update task
-- `DELETE /api/tasks/:id` - Delete task
-
-### Notes
-
-- `GET /api/notes` - Get all notes
-- `POST /api/notes` - Create new note
-- `GET /api/notes/:id` - Get single note
-- `PUT /api/notes/:id` - Update note
-- `DELETE /api/notes/:id` - Delete note
-
-### User Preferences
-
-- `GET /api/user/preferences` - Get user preferences
-- `PUT /api/user/preferences` - Update user preferences
-
-## Security Features
-
-- JWT Authentication
-- Rate Limiting
-- CORS Protection
-- XSS Protection
-- NoSQL Injection Protection
-- HTTP Parameter Pollution Protection
-- Helmet Security Headers
-
-## Error Handling
-
-The API uses a consistent error response format:
-
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "code": "ERROR_CODE"
-}
-```
-
-## Logging
-
-Logs are stored in the `logs` directory:
-
-- `combined.log`: All logs
-- `error.log`: Error logs only
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
-
-## License
-
-ISC
+Contributions, issues, and feature requests are welcome!
