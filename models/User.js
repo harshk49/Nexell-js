@@ -6,10 +6,14 @@ const userSchema = new Schema(
   {
     username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, required: true, unique: true, trim: true },
-    password: { type: String, required: true },
+    password: { type: String }, // Not required for OAuth users
+
+    // OAuth providers
+    googleId: { type: String, sparse: true, unique: true },
+    githubId: { type: String, sparse: true, unique: true },
 
     // Profile Information
-    firstName: { type: String, trim: true },
+    firstName: { type: String, trim: true, required: true },
     lastName: { type: String, trim: true },
     avatar: { type: String, trim: true },
     bio: { type: String, maxLength: 500 },

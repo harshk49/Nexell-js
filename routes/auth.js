@@ -1,5 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 const User = require("../models/User");
 const router = express.Router();
 
@@ -19,16 +20,23 @@ router.get("/test", (req, res) => {
 // Input validation middleware
 const validateRegistration = (req, res, next) => {
   console.log("[Registration Validation] Starting validation");
-  const { username, email, password } = req.body;
+  const { username, email, password, firstName } = req.body;
 
-  if (!username || !email || !password) {
+  if (!username || !email || !password || !firstName) {
     console.log("[Registration Validation] Missing fields");
     return res.status(400).json({
       message: "All fields are required",
       error: "VALIDATION_MISSING_FIELDS",
     });
   }
-
+  // Full name validation
+  if (firstName.trim().length < 1) {
+    console.log("[Registration Validation] Invalid first name");
+    return res.status(400).json({
+      message: "First name is required",
+      error: "VALIDATION_INVALID_NAME",
+    });
+  }
   // Email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
@@ -56,7 +64,7 @@ const validateRegistration = (req, res, next) => {
 router.post("/register", validateRegistration, async (req, res) => {
   console.log("[Registration] Processing request");
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, firstName } = req.body;
 
     // Check if user already exists
     console.log("[Registration] Checking for existing user");
@@ -81,6 +89,8 @@ router.post("/register", validateRegistration, async (req, res) => {
       username,
       email,
       password,
+      firstName,
+      lastName: req.body.lastName || "",
       isActive: true,
       lastLogin: new Date(),
     });
@@ -101,6 +111,8 @@ router.post("/register", validateRegistration, async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName || "",
       },
     });
   } catch (error) {
@@ -115,25 +127,25 @@ router.post("/register", validateRegistration, async (req, res) => {
 // POST /api/auth/login - Authenticate user and return JWT
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-
+    const { emailOrUsername, password } = req.body;
     // Input validation
-    if (!email || !password) {
+    if (!emailOrUsername || !password) {
       return res.status(400).json({
-        message: "Email and password are required",
+        message: "Email/username and password are required",
         error: "LOGIN_MISSING_FIELDS",
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    // Find user by email or username
+    const user = await User.findOne({
+      $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+    });
     if (!user) {
       return res.status(401).json({
         message: "Invalid credentials",
         error: "LOGIN_INVALID_CREDENTIALS",
       });
     }
-
     // Check if account is active
     if (!user.isActive) {
       return res.status(403).json({
@@ -141,7 +153,6 @@ router.post("/login", async (req, res) => {
         error: "LOGIN_ACCOUNT_DEACTIVATED",
       });
     }
-
     // Compare passwords
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
@@ -176,6 +187,8 @@ router.post("/login", async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName || "",
         preferences: user.preferences,
       },
     });
@@ -187,5 +200,51 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
+// Google OAuth routes
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+// Google callback route
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // Generate JWT token
+    const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // Redirect to frontend with token
+    res.redirect(`${process.env.CLIENT_URL}/auth/success?token=${token}`);
+  }
+);
+
+// GitHub authentication route
+router.get(
+  "/github",
+  passport.authenticate("github", { scope: ["user:email"] })
+);
+// GitHub callback route
+router.get(
+  "/github/callback",
+  passport.authenticate("github", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // Generate JWT token
+    const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // Redirect to frontend with token
+    res.redirect(`${process.env.CLIENT_URL}/auth/success?token=${token}`);
+  }
+);
 
 module.exports = router;

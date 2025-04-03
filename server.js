@@ -14,8 +14,27 @@ const xss = require("xss-clean");
 const hpp = require("hpp");
 const path = require("path");
 const logger = require("./utils/logger");
+const session = require("express-session");
+const passport = require("./config/passport");
 
 const app = express();
+
+// Session middleware for OAuth
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Security Middleware
 app.use(

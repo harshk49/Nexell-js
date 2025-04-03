@@ -49,24 +49,58 @@ Body:
 {
   "username": "testuser",
   "email": "test@example.com",
-  "password": "password123"
+  "password": "password123",
+  "firstName": "Test",    # Required
+  "lastName": "User"      # Optional
 }
 
-# Login User
+# Login User (via email or username)
 POST /api/auth/login
 Headers:
   Content-Type: application/json
 Body:
 {
-  "email": "test@example.com",
+  "emailOrUsername": "test@example.com",  # Can be either email or username
   "password": "password123"
 }
+
+# Google OAuth Authentication
+GET /api/auth/google
+
+# Google OAuth Callback
+GET /api/auth/google/callback
+
+# GitHub OAuth Authentication
+GET /api/auth/github
+
+# GitHub OAuth Callback
+GET /api/auth/github/callback
 
 # Logout User
 POST /api/auth/logout
 Headers:
   Authorization: Bearer <your_jwt_token>
 ```
+
+### OAuth Setup
+
+To enable Google and GitHub authentication:
+
+1. **Google OAuth**:
+
+   - Go to the [Google Developer Console](https://console.developers.google.com/)
+   - Create a new project
+   - Configure the OAuth consent screen
+   - Create OAuth 2.0 credentials
+   - Set authorized redirect URI as `http://your-domain/api/auth/google/callback`
+   - Add the credentials to your .env file
+
+2. **GitHub OAuth**:
+   - Go to your [GitHub Settings](https://github.com/settings/developers)
+   - Navigate to Developer Settings > OAuth Apps
+   - Register a new OAuth application
+   - Set the Authorization callback URL as `http://your-domain/api/auth/github/callback`
+   - Add the credentials to your .env file
 
 ### Notes Routes
 
@@ -264,6 +298,15 @@ MONGO_URI=mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:3000
+
+# OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+SESSION_SECRET=your_session_secret_key
+
+# Logging and Security
 LOG_LEVEL=info
 LOG_FORMAT=combined
 RATE_LIMIT_WINDOW_MS=900000
