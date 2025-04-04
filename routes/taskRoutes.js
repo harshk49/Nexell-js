@@ -5,6 +5,18 @@ const authMiddleware = require("../middleware/auth"); // Auth middleware for pro
 
 const router = express.Router();
 
+// Middleware to normalize status field - convert hyphens to spaces
+const normalizeStatusMiddleware = (req, res, next) => {
+  if (req.body && req.body.status) {
+    // Convert any status with hyphens (e.g., "in-progress") to spaces ("in progress")
+    req.body.status = req.body.status.replace(/-/g, " ");
+    console.log(
+      `[Status Normalization] Normalized status to: ${req.body.status}`
+    );
+  }
+  next();
+};
+
 // Validation middleware
 const taskValidation = [
   body("title").notEmpty().withMessage("Title is required"),
@@ -63,24 +75,30 @@ const taskValidation = [
  * @desc    Create a new task
  * @access  Private
  */
-router.post("/", authMiddleware, taskValidation, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+router.post(
+  "/",
+  authMiddleware,
+  normalizeStatusMiddleware,
+  taskValidation,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  try {
-    const task = new Task({
-      ...req.body,
-      owner: req.user.userId,
-    });
+    try {
+      const task = new Task({
+        ...req.body,
+        owner: req.user.userId,
+      });
 
-    await task.save();
-    res.status(201).json({ message: "Task created successfully", task });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+      await task.save();
+      res.status(201).json({ message: "Task created successfully", task });
+    } catch (err) {
+      res.status(500).json({ message: "Server error", error: err.message });
+    }
   }
-});
+);
 
 /**
  * @route   GET /api/tasks
@@ -174,35 +192,41 @@ router.get("/:id", authMiddleware, async (req, res) => {
  * @desc    Update a task
  * @access  Private
  */
-router.put("/:id", authMiddleware, taskValidation, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  try {
-    const task = await Task.findOne({
-      _id: req.params.id,
-      owner: req.user.userId,
-    });
-
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+router.put(
+  "/:id",
+  authMiddleware,
+  normalizeStatusMiddleware,
+  taskValidation,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    // Update fields
-    Object.keys(req.body).forEach((key) => {
-      if (req.body[key] !== undefined) {
-        task[key] = req.body[key];
-      }
-    });
+    try {
+      const task = await Task.findOne({
+        _id: req.params.id,
+        owner: req.user.userId,
+      });
 
-    await task.save();
-    res.status(200).json({ message: "Task updated successfully", task });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Update fields
+      Object.keys(req.body).forEach((key) => {
+        if (req.body[key] !== undefined) {
+          task[key] = req.body[key];
+        }
+      });
+
+      await task.save();
+      res.status(200).json({ message: "Task updated successfully", task });
+    } catch (err) {
+      res.status(500).json({ message: "Server error", error: err.message });
+    }
   }
-});
+);
 
 /**
  * @route   DELETE /api/tasks/:id

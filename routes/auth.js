@@ -142,8 +142,8 @@ router.post("/login", async (req, res) => {
     });
     if (!user) {
       return res.status(401).json({
-        message: "Invalid credentials",
-        error: "LOGIN_INVALID_CREDENTIALS",
+        message: "User not found with this email or username",
+        error: "LOGIN_USER_NOT_FOUND",
       });
     }
     // Check if account is active
@@ -157,8 +157,8 @@ router.post("/login", async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
-        message: "Invalid credentials",
-        error: "LOGIN_INVALID_CREDENTIALS",
+        message: "Password is incorrect",
+        error: "LOGIN_INVALID_PASSWORD",
       });
     }
 
@@ -246,5 +246,33 @@ router.get(
     res.redirect(`${process.env.CLIENT_URL}/auth/success?token=${token}`);
   }
 );
+
+// POST /api/auth/logout - Logout user
+router.post("/logout", async (req, res) => {
+  try {
+    // Get token from authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "No token provided",
+        error: "LOGOUT_NO_TOKEN",
+      });
+    }
+
+    // We could implement token blacklisting here for true invalidation
+    // But for most JWT implementations, the client simply discards the token
+
+    return res.status(200).json({
+      message: "Logout successful",
+      error: null,
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      message: "Server error during logout",
+      error: "LOGOUT_SERVER_ERROR",
+    });
+  }
+});
 
 module.exports = router;

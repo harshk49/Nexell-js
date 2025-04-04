@@ -1,4 +1,4 @@
-# TaskNexus - Task and Note Management API
+# Nexell - Task and Note Management API
 
 A robust RESTful API for managing tasks and notes, built with Node.js, Express, and MongoDB.
 
