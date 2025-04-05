@@ -19,6 +19,9 @@ const passport = require("./config/passport");
 
 const app = express();
 
+// Trust the proxy so that req.ip returns the correct client IP
+app.set("trust proxy", true);
+
 // Session middleware for OAuth
 app.use(
   session({
