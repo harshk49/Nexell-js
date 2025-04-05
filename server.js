@@ -48,7 +48,7 @@ app.use(
 // CORS configuration
 app.use(
   cors({
-    origin: true, // Allow all origins temporarily
+    origin: process.env.CLIENT_URL, // Specifically allow the frontend domain
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -126,7 +126,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/user", userRoutes);
 
-// Health Check Route
+// Health Check and Ping Routes
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -136,6 +136,32 @@ app.get("/health", (req, res) => {
     uptime: process.uptime(),
   });
 });
+
+// Lightweight ping endpoint for waking up the server
+app.get("/ping", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "pong",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Base URL welcome message
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Welcome to Nexell API",
+    documentation: "https://github.com/your-repo/nexell",
+    endpoints: {
+      api: "/api",
+      health: "/health",
+      ping: "/ping",
+    },
+  });
+});
+
+// CORS preflight for all routes
+app.options("*", cors());
 
 // Serve static files only in production
 if (process.env.NODE_ENV === "production") {

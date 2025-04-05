@@ -2,13 +2,15 @@
 
 A robust RESTful API for managing tasks and notes, built with Node.js, Express, and MongoDB.
 
-## 🌐 Live API
+## 🌐 Live Deployments
 
-The API is now live and available at:
+The application is now live and available at:
 
-```
-https://tasknexus-backend.onrender.com
-```
+- **Frontend**: [https://nexell-digitalhub.vercel.app](https://nexell-digitalhub.vercel.app)
+- **Backend API**: [https://nexell-js.onrender.com/api](https://nexell-js.onrender.com/api)
+- **API Documentation**: [https://nexell-js.onrender.com](https://nexell-js.onrender.com)
+
+> **Note about Render's Free Tier**: The backend is hosted on Render's free tier which spins down after 15 minutes of inactivity. The first request after inactivity may take up to 30 seconds to respond as the service spins up. See the [Server Ping](#server-ping) section for a solution.
 
 ## 🚀 Features
 
@@ -35,8 +37,60 @@ https://tasknexus-backend.onrender.com
 ### Base URL
 
 ```
-https://tasknexus-backend.onrender.com
+https://nexell-js.onrender.com/api
 ```
+
+### Server Ping
+
+To prevent the initial delay when accessing the application after a period of inactivity, a ping endpoint has been implemented that can be called when the frontend application loads:
+
+```
+GET https://nexell-js.onrender.com/ping
+```
+
+This endpoint returns a lightweight response to wake up the server without putting load on the database or other resources:
+
+```json
+{
+  "status": "success",
+  "message": "pong",
+  "timestamp": "2025-04-05T18:36:28.816Z"
+}
+```
+
+#### Frontend Implementation
+
+You can implement this in your React frontend by adding the following code to your app's entry point component (e.g., App.jsx):
+
+```jsx
+import { useEffect } from "react";
+
+function App() {
+  useEffect(() => {
+    // Ping the backend to wake it up when the app loads
+    const pingServer = async () => {
+      try {
+        const response = await fetch("https://nexell-js.onrender.com/ping", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        console.log("Server ping successful:", data);
+      } catch (error) {
+        console.error("Server ping failed:", error);
+      }
+    };
+
+    pingServer();
+  }, []);
+
+  // Rest of your app...
+}
+```
+
+This will ping the server when your application loads, minimizing wait time for users.
 
 ### Authentication Routes
 
@@ -92,14 +146,14 @@ To enable Google and GitHub authentication:
    - Create a new project
    - Configure the OAuth consent screen
    - Create OAuth 2.0 credentials
-   - Set authorized redirect URI as `http://your-domain/api/auth/google/callback`
+   - Set authorized redirect URI as `https://nexell-js.onrender.com/api/auth/google/callback`
    - Add the credentials to your .env file
 
 2. **GitHub OAuth**:
    - Go to your [GitHub Settings](https://github.com/settings/developers)
    - Navigate to Developer Settings > OAuth Apps
    - Register a new OAuth application
-   - Set the Authorization callback URL as `http://your-domain/api/auth/github/callback`
+   - Set the Authorization callback URL as `https://nexell-js.onrender.com/api/auth/github/callback`
    - Add the credentials to your .env file
 
 ### Notes Routes
@@ -223,13 +277,42 @@ Body:
 }
 ```
 
-### Health Check
+### Base URL Endpoints
 
 ```bash
+# Base URL Welcome Message
+GET /
+Response:
+{
+  "status": "success",
+  "message": "Welcome to Nexell API",
+  "documentation": "https://github.com/your-repo/nexell",
+  "endpoints": {
+    "api": "/api",
+    "health": "/health",
+    "ping": "/ping"
+  }
+}
+
 # Check API Health
 GET /health
-Headers:
-  None
+Response:
+{
+  "status": "success",
+  "message": "Server is healthy",
+  "timestamp": "2025-04-05T18:36:28.816Z",
+  "environment": "production",
+  "uptime": 3600.212
+}
+
+# Ping Server (for waking up from sleep)
+GET /ping
+Response:
+{
+  "status": "success",
+  "message": "pong",
+  "timestamp": "2025-04-05T18:36:28.816Z"
+}
 ```
 
 ## 🔒 Security Features
@@ -244,6 +327,14 @@ Headers:
 - Security Headers (Helmet)
 
 ## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js >= 18.0.0
+- MongoDB
+- npm or yarn
+
+### Local Development
 
 ### Prerequisites
 
@@ -289,15 +380,57 @@ Run tests:
 npm test
 ```
 
+## 🐳 Docker Deployment
+
+This project includes Docker configuration for easy deployment:
+
+### Using Docker Compose
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+### Using Docker Directly
+
+```bash
+# Build the image
+docker build -t nexell-api .
+
+# Run the container
+docker run -p 5000:5000 --env-file .env -d nexell-api
+```
+
+### Docker in Production
+
+For production deployment, we recommend:
+
+1. Using the multi-stage build Dockerfile (already configured)
+2. Setting appropriate environment variables
+3. Using Docker volumes for persistent data
+4. Setting up a reverse proxy (nginx) for SSL termination
+
 ## 📝 Environment Variables
 
+For local development, create a `.env` file with these variables:
+
 ```env
+# Server Configuration
 NODE_ENV=development
 PORT=5000
-MONGO_URI=mongodb_connection_string
+
+# MongoDB Configuration
+MONGO_URI=mongodb://localhost:27017/nexell
+
+# JWT Configuration
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
-CLIENT_URL=http://localhost:3000
 
 # OAuth Configuration
 GOOGLE_CLIENT_ID=your_google_client_id
@@ -306,20 +439,41 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 SESSION_SECRET=your_session_secret_key
 
+# Client URL (for CORS)
+CLIENT_URL=http://localhost:3000
+
 # Logging and Security
 LOG_LEVEL=info
 LOG_FORMAT=combined
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
-AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_WINDOW_MS=3600000
 AUTH_RATE_LIMIT_MAX_REQUESTS=5
-ENABLE_SECURITY_HEADERS=true
-ENABLE_CORS=true
-ENABLE_RATE_LIMIT=true
-ENABLE_COMPRESSION=true
-ENABLE_LOGGING=true
-ENABLE_HEALTH_CHECK=true
 ```
+
+For production deployment on Render, see the `.env.render` file or use the environment variables UI in the Render dashboard.
+
+## 🚀 Deployment on Render
+
+### Backend Deployment Steps
+
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Choose the main branch and select the root directory
+4. Select "Node" as the runtime environment
+5. Set the build command: `npm install`
+6. Set the start command: `node server.js`
+7. Add the environment variables from `.env.render`
+8. Click "Create Web Service"
+
+### Frontend Deployment on Vercel
+
+1. Push your frontend code to GitHub
+2. Create a new project on Vercel
+3. Connect your GitHub repository
+4. Set the root directory to your frontend folder
+5. Configure environment variables if needed
+6. Click "Deploy"
 
 ## 📄 License
 
