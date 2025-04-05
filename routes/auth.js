@@ -232,6 +232,22 @@ router.get(
 // GitHub callback route
 router.get(
   "/github/callback",
+  (req, res, next) => {
+    // Log the entire query object to verify GitHub parameters
+    console.log("GitHub OAuth Callback Query Parameters:", req.query);
+
+    // Verify the code exists in query parameters
+    if (!req.query.code) {
+      console.error("GitHub OAuth code missing from query parameters");
+      return res.status(400).json({
+        message: "Missing OAuth code in request",
+        error: "GITHUB_OAUTH_MISSING_CODE",
+      });
+    }
+
+    console.log("GitHub OAuth Code:", req.query.code);
+    next();
+  },
   passport.authenticate("github", {
     session: false,
     failureRedirect: `${process.env.CLIENT_URL}/auth?mode=login`,
