@@ -6,6 +6,7 @@ const NoteSchema = new Schema(
     title: { type: String, required: true, trim: true },
     content: { type: String, default: "" }, // Supports Markdown content
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    organization: { type: Schema.Types.ObjectId, ref: "Organization" },
     isShared: { type: Boolean, default: false },
     sharedWith: [{ type: Schema.Types.ObjectId, ref: "User" }],
 

@@ -17,7 +17,13 @@ The application is now live and available at:
 - User Authentication (JWT)
 - Task Management
 - Note Management
+- Time Tracking System
 - User Profile Management
+- Team, Organization & Role Management
+- Role-based Access Control
+- Invitation System
+- Reports & Analytics Engine
+- Data Export (CSV)
 - Rate Limiting
 - Security Features
 - Error Handling
@@ -246,35 +252,248 @@ Headers:
   Authorization: Bearer <your_jwt_token>
 ```
 
-### User Routes
+### Time Tracking Routes
 
 ```bash
-# Get User Profile
-GET /api/user/profile
+# Start Timer
+POST /api/time-tracking/tasks/:taskId/start
 Headers:
-  Authorization: Bearer <your_jwt_token>
-
-# Update User Profile
-PUT /api/user/profile
-Headers:
-  Authorization: Bearer <your_jwt_token>
   Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
+
+# Stop Timer
+POST /api/time-tracking/tasks/:taskId/stop
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
 Body:
 {
-  "username": "newusername",
-  "email": "newemail@example.com"
+  "comment": "Worked on feature X"  # Optional
 }
 
-# Change Password
-PUT /api/user/change-password
+# Add Manual Time Entry
+POST /api/time-tracking/tasks/:taskId/entries
 Headers:
-  Authorization: Bearer <your_jwt_token>
   Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
 Body:
 {
-  "currentPassword": "oldpassword",
-  "newPassword": "newpassword"
+  "duration": 45,         # Minutes
+  "date": "2025-04-01",   # YYYY-MM-DD
+  "comment": "Worked on feature X",  # Optional
+  "startTime": "14:30"    # Optional, HH:MM format
 }
+
+# Get Time Entries for a Task
+GET /api/time-tracking/tasks/:taskId/entries
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Delete Time Entry
+DELETE /api/time-tracking/entries/:entryId
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Get Time Reports
+GET /api/time-tracking/reports
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Query Parameters:
+  startDate: 2025-04-01    # YYYY-MM-DD
+  endDate: 2025-04-07      # YYYY-MM-DD
+  groupBy: day             # Optional: 'day', 'task', 'category'
+```
+
+### Organization & Team Management Routes
+
+```bash
+# Create a New Organization
+POST /api/organizations
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
+Body:
+{
+  "name": "Acme Inc",
+  "description": "Software development team",
+  "logo": "https://example.com/logo.png",  # Optional
+  "website": "https://acme.com",           # Optional
+  "settings": {                            # Optional
+    "defaultTaskView": "board",
+    "defaultNoteView": "grid",
+    "timeTracking": {
+      "enabled": true,
+      "roundingInterval": 5,
+      "requireComment": true
+    }
+  }
+}
+
+# Get User's Organizations
+GET /api/organizations
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Get Organization Details
+GET /api/organizations/:organizationId
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Update Organization
+PUT /api/organizations/:organizationId
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
+Body:
+{
+  "name": "Acme Corporation",
+  "description": "Updated description",
+  "logo": "https://example.com/new-logo.png",
+  "settings": {
+    "defaultTaskView": "calendar"
+  }
+}
+
+# Delete Organization (Admin only)
+DELETE /api/organizations/:organizationId
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Set Current Organization
+POST /api/organizations/:organizationId/set-current
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Leave Organization
+POST /api/organizations/:organizationId/leave
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+```
+
+### Organization Membership Routes
+
+```bash
+# Get Organization Members
+GET /api/organizations/:organizationId/members
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Query Parameters:
+  page: 1                 # Optional, default 1
+  limit: 10               # Optional, default 10
+  sortBy: joinedAt        # Optional, default joinedAt
+  sortOrder: desc         # Optional, default desc
+  role: admin             # Optional, filter by role
+
+# Get Specific Membership
+GET /api/organizations/:organizationId/members/:membershipId
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Update Member Role or Title (Admin only)
+PUT /api/organizations/:organizationId/members/:membershipId
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
+Body:
+{
+  "role": "admin",       # Optional
+  "title": "CTO"         # Optional
+}
+
+# Remove Member (Admin only)
+DELETE /api/organizations/:organizationId/members/:membershipId
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+```
+
+### Organization Invitation Routes
+
+```bash
+# Invite a User to Organization
+POST /api/organizations/:organizationId/invitations
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer YOUR_TOKEN
+Body:
+{
+  "email": "newmember@example.com",
+  "role": "member",               # "admin", "member", or "viewer"
+  "message": "Please join our organization" # Optional
+}
+
+# Get Organization's Pending Invitations
+GET /api/organizations/:organizationId/invitations
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Query Parameters:
+  status: pending         # Optional, filter by status
+
+# Cancel Invitation (Admin only)
+DELETE /api/organizations/:organizationId/invitations/:invitationId
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Resend Invitation (Admin only)
+POST /api/organizations/:organizationId/invitations/:invitationId/resend
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Get Pending Invitations for Current User
+GET /api/invitations
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+
+# Accept Invitation
+POST /api/invitations/accept/:token
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+```
+
+### Reports & Analytics Routes
+
+```bash
+# Time Tracking Reports
+GET /api/reports/time-tracking
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Query Parameters:
+  startDate: 2025-04-01    # Start date (YYYY-MM-DD)
+  endDate: 2025-04-30      # End date (YYYY-MM-DD)
+  groupBy: day             # Group by: "day", "week", "month", "user", "task", "category"
+  userId: 5f8d0e..         # Optional: Filter by specific user
+  organizationId: 5f8d0e.. # Optional: Filter by organization
+  taskId: 5f8d0e..         # Optional: Filter by specific task
+  category: "Development"  # Optional: Filter by task category
+  tags: "feature,urgent"   # Optional: Filter by task tags (comma-separated)
+
+# Task Completion Reports
+GET /api/reports/task-completion
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Query Parameters:
+  startDate: 2025-04-01    # Start date (YYYY-MM-DD)
+  endDate: 2025-04-30      # End date (YYYY-MM-DD)
+  period: daily            # Period: "daily", "weekly", "monthly"
+  groupBy: date            # Group by: "date", "user", "category", "priority"
+  userId: 5f8d0e..         # Optional: Filter by specific user
+  organizationId: 5f8d0e.. # Optional: Filter by organization
+
+# Organization Productivity Report
+GET /api/reports/organizations/:organizationId/productivity
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Query Parameters:
+  startDate: 2025-04-01    # Optional: Start date (YYYY-MM-DD), defaults to 30 days ago
+  endDate: 2025-04-30      # Optional: End date (YYYY-MM-DD), defaults to today
+
+# Export Reports to CSV
+GET /api/reports/export/:reportType
+Headers:
+  Authorization: Bearer YOUR_TOKEN
+Path Parameters:
+  reportType: time         # Report type: "time", "tasks", or "productivity"
+Query Parameters:
+  # Same query parameters as the respective report endpoints
 ```
 
 ### Base URL Endpoints

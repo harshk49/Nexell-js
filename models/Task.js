@@ -17,6 +17,7 @@ const TaskSchema = new Schema(
       default: "medium",
     },
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    organization: { type: Schema.Types.ObjectId, ref: "Organization" },
     reminders: [{ type: Date }],
 
     // Task Organization
@@ -66,6 +67,13 @@ const TaskSchema = new Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+
+    // Time Tracking
+    timeEntries: [{ type: Schema.Types.ObjectId, ref: "TimeLog" }],
+    totalTimeSpent: { type: Number, default: 0 }, // in seconds
+    isTimeTrackingEnabled: { type: Boolean, default: true },
+    hasActiveTimer: { type: Boolean, default: false },
+    lastActiveTimerId: { type: Schema.Types.ObjectId, ref: "TimeLog" },
 
     // Task Status
     isArchived: { type: Boolean, default: false },

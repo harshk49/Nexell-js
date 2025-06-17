@@ -29,6 +29,11 @@ const userSchema = new Schema(
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
     notes: [{ type: Schema.Types.ObjectId, ref: "Note" }],
 
+    // Organization Memberships
+    organizations: [{ type: Schema.Types.ObjectId, ref: "Membership" }],
+    currentOrganization: { type: Schema.Types.ObjectId, ref: "Organization" },
+    invitations: [{ type: Schema.Types.ObjectId, ref: "Invitation" }],
+
     // User Preferences
     preferences: {
       theme: {
