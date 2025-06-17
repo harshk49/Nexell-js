@@ -1,22 +1,56 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+const { Schema } = mongoose;
 
+/**
+ * User Schema - represents a user in the application
+ */
 const userSchema = new Schema(
   {
-    username: { type: String, required: true, unique: true, trim: true },
-    email: { type: String, required: true, unique: true, trim: true },
-    password: { type: String }, // Not required for OAuth users
+    username: {
+      type: String,
+      required: [true, "Username is required"],
+      unique: true,
+      trim: true,
+      minlength: [3, "Username must be at least 3 characters long"],
+      maxlength: [30, "Username cannot exceed 30 characters"],
+      // Disallow special characters in username
+      match: [
+        /^[a-zA-Z0-9._-]+$/,
+        "Username can only contain letters, numbers, dots, underscores and dashes",
+      ],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      trim: true,
+      lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
+    },
+    password: {
+      type: String,
+      select: false, // Don't include password in query results by default
+      minlength: [8, "Password must be at least 8 characters long"],
+      // Only required for non-OAuth users
+      required: function () {
+        return !this.googleId && !this.githubId;
+      },
+    },
 
     // OAuth providers
     googleId: { type: String, sparse: true, unique: true },
     githubId: { type: String, sparse: true, unique: true },
 
     // Profile Information
-    firstName: { type: String, trim: true, required: true },
+    firstName: {
+      type: String,
+      trim: true,
+      required: [true, "First name is required"],
+    },
     lastName: { type: String, trim: true },
     avatar: { type: String, trim: true },
-    bio: { type: String, maxLength: 500 },
+    bio: { type: String, maxLength: [500, "Bio cannot exceed 500 characters"] },
 
     // Account Status
     isActive: { type: Boolean, default: true },
@@ -97,8 +131,11 @@ const userSchema = new Schema(
         date: { type: Date, default: Date.now },
         ip: String,
         userAgent: String,
+        provider: { type: String, enum: ["local", "google", "github"] },
       },
     ],
+    createdTasks: { type: Number, default: 0 },
+    completedTasks: { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -114,6 +151,16 @@ userSchema.virtual("fullName").get(function () {
   );
 });
 
+// Virtual for initials (for avatar fallback)
+userSchema.virtual("initials").get(function () {
+  const firstInitial = this.firstName ? this.firstName.charAt(0) : "";
+  const lastInitial = this.lastName ? this.lastName.charAt(0) : "";
+  return (
+    (firstInitial + lastInitial).toUpperCase() ||
+    this.username.charAt(0).toUpperCase()
+  );
+});
+
 // Pre-save middleware to hash password if modified
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -126,12 +173,30 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-// Instance method to compare candidate password with stored hash
+// Method to check if password is correct
 userSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Method to generate password reset token
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // Token expires in 10 minutes
+  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 // Indexes for faster queries
 userSchema.index({ email: 1, username: 1 });
+userSchema.index({ currentOrganization: 1 });
 
-module.exports = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+
+export default User;

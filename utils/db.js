@@ -1,20 +1,32 @@
-const mongoose = require("mongoose");
-const logger = require("./logger");
+import mongoose from "mongoose";
+import logger from "./logger.js";
 
+/**
+ * Connect to MongoDB database
+ * @returns {Promise<mongoose.Connection>} MongoDB connection
+ */
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+    // Connection options
+    const options = {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       maxPoolSize: 10,
       minPoolSize: 5,
       retryWrites: true,
       w: "majority",
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      // Remove deprecated options
+      // useNewUrlParser and useUnifiedTopology are no longer needed in mongoose 6+
       autoIndex: process.env.NODE_ENV !== "production", // Disable auto-indexing in production
-    });
+    };
 
+    // Add SSL options for production environments
+    if (process.env.NODE_ENV === "production") {
+      options.ssl = true;
+      options.tlsAllowInvalidCertificates = false;
+    }
+
+    const conn = await mongoose.connect(process.env.MONGO_URI, options);
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
 
     // Handle connection errors after initial connection
@@ -28,6 +40,11 @@ const connectDB = async () => {
       setTimeout(connectDB, 5000); // Attempt to reconnect after 5 seconds
     });
 
+    // Handle successful reconnection
+    mongoose.connection.on("reconnected", () => {
+      logger.info("MongoDB reconnected successfully");
+    });
+
     // Handle process termination
     process.on("SIGINT", async () => {
       try {
@@ -39,10 +56,12 @@ const connectDB = async () => {
         process.exit(1);
       }
     });
+
+    return conn.connection;
   } catch (error) {
     logger.error("MongoDB Connection Failed:", error);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+export default connectDB;

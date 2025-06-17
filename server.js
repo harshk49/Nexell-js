@@ -1,21 +1,39 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const compression = require("compression");
-const cookieParser = require("cookie-parser");
-const mongoSanitize = require("express-mongo-sanitize");
-const rateLimit = require("express-rate-limit");
-const xss = require("xss-clean");
-const hpp = require("hpp");
-const path = require("path");
-const logger = require("./utils/logger");
-const session = require("express-session");
-const passport = require("./config/passport");
+import "dotenv/config";
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import mongoSanitize from "express-mongo-sanitize";
+import rateLimit from "express-rate-limit";
+import xss from "xss-clean";
+import hpp from "hpp";
+import path from "path";
+import { fileURLToPath } from "url";
+import session from "express-session";
+import passport from "./config/passport.js";
+import logger from "./utils/logger.js";
+
+// Import middleware
+import { requestIdMiddleware } from "./middleware/requestId.js";
+
+// Import Routes
+import authRoutes from "./routes/auth.js";
+import noteRoutes from "./routes/noteRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import timeTrackingRoutes from "./routes/timeTrackingRoutes.js";
+import organizationRoutes from "./routes/organizationRoutes.js";
+import invitationRoutes from "./routes/invitationRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import integrationRoutes from "./routes/integrationRoutes.js";
+import permissionRoutes from "./routes/permissionRoutes.js";
+
+// Get current file directory (replacement for __dirname in ESM)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -32,6 +50,7 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: "strict", // Added for security
     },
   })
 );
@@ -96,6 +115,13 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Apply auth rate limiting
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+
+// Add requestId to all requests for tracking
+app.use(requestIdMiddleware);
+
 // Connect to MongoDB
 const connectDB = async () => {
   try {
@@ -115,19 +141,6 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
-
-// Import Routes & Middleware
-const authRoutes = require("./routes/auth");
-const noteRoutes = require("./routes/noteRoutes");
-const taskRoutes = require("./routes/taskRoutes");
-const userRoutes = require("./routes/userRoutes");
-const timeTrackingRoutes = require("./routes/timeTrackingRoutes");
-const organizationRoutes = require("./routes/organizationRoutes");
-const invitationRoutes = require("./routes/invitationRoutes");
-const reportRoutes = require("./routes/reportRoutes");
-const integrationRoutes = require("./routes/integrationRoutes");
-const permissionRoutes = require("./routes/permissionRoutes");
-const authMiddleware = require("./middleware/auth");
 
 // Mount Routes
 app.use("/api/auth", authRoutes);
@@ -268,3 +281,5 @@ process.on("uncaughtException", (err) => {
 
 // Connect to database
 connectDB();
+
+export default app;

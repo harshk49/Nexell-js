@@ -1,204 +1,121 @@
-const express = require("express");
-const Note = require("../models/Note");
-const authMiddleware = require("../middleware/auth");
+import express from "express";
+import { authenticateUser } from "../middleware/auth.js";
+import noteController from "../controllers/noteController.js";
+import { validateRequest } from "../middleware/validation.js";
+
 const router = express.Router();
 
-// 📌 Validation Middleware
-const validateNote = (req, res, next) => {
-  const { title, content } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({
-      message: "Title and content are required",
-      error: "VALIDATION_MISSING_FIELDS",
-    });
-  }
-  if (title.length > 100) {
-    return res.status(400).json({
-      message: "Title must be under 100 characters",
-      error: "VALIDATION_TITLE_TOO_LONG",
-    });
-  }
-  next();
+// Validation schemas
+const createNoteSchema = {
+  body: {
+    title: { type: "string", required: true, minLength: 1, maxLength: 100 },
+    content: { type: "string", maxLength: 50000 },
+    category: { type: "string", maxLength: 50 },
+    tags: { type: "array", items: { type: "string", maxLength: 30 } },
+    isPinned: { type: "boolean" },
+    isArchived: { type: "boolean" },
+    isFavorite: { type: "boolean" },
+    color: { type: "string", pattern: "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+    organization: { type: "string", pattern: "^[0-9a-fA-F]{24}$" },
+  },
 };
 
-// 📌 CREATE Note (POST /api/notes)
-router.post("/", authMiddleware, validateNote, async (req, res) => {
-  try {
-    const { title, content, isPinned, tags, category, color } = req.body;
-    const note = new Note({
-      title,
-      content,
-      owner: req.user.userId,
-      isPinned,
-      tags,
-      category,
-      color,
-    });
-    await note.save();
-    res.status(201).json({
-      message: "Note created successfully",
-      note,
-    });
-  } catch (error) {
-    console.error("Note creation error:", error);
-    res.status(500).json({
-      message: "Error creating note",
-      error: "NOTE_CREATION_ERROR",
-    });
-  }
-});
+const updateNoteSchema = {
+  body: {
+    title: { type: "string", minLength: 1, maxLength: 100 },
+    content: { type: "string", maxLength: 50000 },
+    category: { type: "string", maxLength: 50 },
+    tags: { type: "array", items: { type: "string", maxLength: 30 } },
+    isPinned: { type: "boolean" },
+    isArchived: { type: "boolean" },
+    isFavorite: { type: "boolean" },
+    color: { type: "string", pattern: "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+  },
+  params: {
+    id: { type: "string", pattern: "^[0-9a-fA-F]{24}$", required: true },
+  },
+};
 
-// 📌 GET All Notes for Logged-in User (GET /api/notes)
-router.get("/", authMiddleware, async (req, res) => {
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      sortBy = "createdAt",
-      sortOrder = "desc",
-      category,
-      isPinned,
-      isArchived,
-      tags,
-      search,
-    } = req.query;
+const collaboratorSchema = {
+  body: {
+    collaboratorId: {
+      type: "string",
+      pattern: "^[0-9a-fA-F]{24}$",
+      required: true,
+    },
+    role: {
+      type: "string",
+      enum: ["viewer", "editor", "owner"],
+      required: true,
+    },
+  },
+  params: {
+    id: { type: "string", pattern: "^[0-9a-fA-F]{24}$", required: true },
+  },
+};
 
-    // Build query
-    const query = { owner: req.user.userId };
+const shareNoteSchema = {
+  body: {
+    userIds: {
+      type: "array",
+      items: { type: "string", pattern: "^[0-9a-fA-F]{24}$" },
+    },
+    isPublic: { type: "boolean" },
+  },
+  params: {
+    id: { type: "string", pattern: "^[0-9a-fA-F]{24}$", required: true },
+  },
+};
 
-    // Apply filters
-    if (category) query.category = category;
-    if (isPinned !== undefined) query.isPinned = isPinned === "true";
-    if (isArchived !== undefined) query.isArchived = isArchived === "true";
-    if (tags) query.tags = { $in: Array.isArray(tags) ? tags : [tags] };
+// Routes for notes
+router.post(
+  "/",
+  authenticateUser,
+  validateRequest(createNoteSchema),
+  noteController.createNote.bind(noteController)
+);
 
-    // Add text search if provided
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { content: { $regex: search, $options: "i" } },
-      ];
-    }
+router.get("/", authenticateUser, noteController.getNotes.bind(noteController));
 
-    // Build sort object
-    const sort = {};
-    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+router.get(
+  "/:id",
+  authenticateUser,
+  noteController.getNoteById.bind(noteController)
+);
 
-    // Execute query with pagination
-    const notes = await Note.find(query)
-      .sort(sort)
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .select(
-        "title content createdAt updatedAt isPinned isArchived category tags color"
-      )
-      .lean();
+router.put(
+  "/:id",
+  authenticateUser,
+  validateRequest(updateNoteSchema),
+  noteController.updateNote.bind(noteController)
+);
 
-    // Get total count for pagination
-    const total = await Note.countDocuments(query);
+router.delete(
+  "/:id",
+  authenticateUser,
+  noteController.deleteNote.bind(noteController)
+);
 
-    res.json({
-      message: "Notes retrieved successfully",
-      notes,
-      pagination: {
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / limit),
-        limit: parseInt(limit),
-      },
-    });
-  } catch (error) {
-    console.error("Note fetch error:", error);
-    res.status(500).json({
-      message: "Error fetching notes",
-      error: "NOTE_FETCH_ERROR",
-    });
-  }
-});
+// Collaboration routes
+router.post(
+  "/:id/collaborators",
+  authenticateUser,
+  validateRequest(collaboratorSchema),
+  noteController.addCollaborator.bind(noteController)
+);
 
-// 📌 GET a Single Note (GET /api/notes/:id)
-router.get("/:id", authMiddleware, async (req, res) => {
-  try {
-    const note = await Note.findOne({
-      _id: req.params.id,
-      owner: req.user.userId,
-    });
+router.delete(
+  "/:id/collaborators/:collaboratorId",
+  authenticateUser,
+  noteController.removeCollaborator.bind(noteController)
+);
 
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found",
-        error: "NOTE_NOT_FOUND",
-      });
-    }
+// Sharing routes
+router.post(
+  "/:id/share",
+  authenticateUser,
+  validateRequest(shareNoteSchema),
+  noteController.shareNote.bind(noteController)
+);
 
-    res.json({
-      message: "Note retrieved successfully",
-      note,
-    });
-  } catch (error) {
-    console.error("Note fetch error:", error);
-    res.status(500).json({
-      message: "Error fetching note",
-      error: "NOTE_FETCH_ERROR",
-    });
-  }
-});
-
-// 📌 UPDATE Note (PUT /api/notes/:id)
-router.put("/:id", authMiddleware, validateNote, async (req, res) => {
-  try {
-    const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, owner: req.user.userId },
-      { $set: req.body },
-      { new: true, runValidators: true }
-    );
-
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found",
-        error: "NOTE_NOT_FOUND",
-      });
-    }
-
-    res.json({
-      message: "Note updated successfully",
-      note,
-    });
-  } catch (error) {
-    console.error("Note update error:", error);
-    res.status(500).json({
-      message: "Error updating note",
-      error: "NOTE_UPDATE_ERROR",
-    });
-  }
-});
-
-// 📌 DELETE Note (DELETE /api/notes/:id)
-router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    const note = await Note.findOneAndDelete({
-      _id: req.params.id,
-      owner: req.user.userId,
-    });
-
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found",
-        error: "NOTE_NOT_FOUND",
-      });
-    }
-
-    res.json({
-      message: "Note deleted successfully",
-      note,
-    });
-  } catch (error) {
-    console.error("Note deletion error:", error);
-    res.status(500).json({
-      message: "Error deleting note",
-      error: "NOTE_DELETION_ERROR",
-    });
-  }
-});
-
-module.exports = router;
+export default router;

@@ -1,64 +1,133 @@
-const taskService = require('../services/taskService');
-const logger = require('../utils/logger');
+import taskService from "../services/taskService.js";
+import logger from "../utils/logger.js";
 
+/**
+ * Task Controller - Handles HTTP requests related to tasks
+ */
 class TaskController {
+  /**
+   * Create a new task
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
   async createTask(req, res) {
     try {
-      const task = await taskService.createTask({
+      // Add user ID from authentication token
+      const taskData = {
         ...req.body,
-        owner: req.user.userId
-      });
+        owner: req.user.userId,
+      };
+
+      const task = await taskService.createTask(taskData);
+
+      logger.info(`Task created: ${task._id} by user ${req.user.userId}`);
+
       res.status(201).json({
-        message: 'Task created successfully',
-        task
+        success: true,
+        message: "Task created successfully",
+        task,
       });
     } catch (error) {
-      logger.error(`Task creation error: ${error.message}`);
+      logger.error(`Task creation error: ${error.message}`, {
+        requestId: req.requestId,
+      });
+
+      // Handle validation errors
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          success: false,
+          message: "Validation error",
+          errors: Object.values(error.errors).map((err) => err.message),
+          error: "TASK_VALIDATION_ERROR",
+        });
+      }
+
       res.status(500).json({
-        message: 'Error creating task',
-        error: 'TASK_CREATION_ERROR'
+        success: false,
+        message: "Error creating task",
+        error: "TASK_CREATION_ERROR",
       });
     }
   }
 
+  /**
+   * Get tasks with pagination, filtering and sorting
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
   async getTasks(req, res) {
     try {
       const result = await taskService.getTasks(req.user.userId, req.query);
+
       res.json({
-        message: 'Tasks retrieved successfully',
-        ...result
+        success: true,
+        message: "Tasks retrieved successfully",
+        ...result,
       });
     } catch (error) {
-      logger.error(`Task fetch error: ${error.message}`);
+      logger.error(`Task fetch error: ${error.message}`, {
+        requestId: req.requestId,
+      });
+
       res.status(500).json({
-        message: 'Error fetching tasks',
-        error: 'TASK_FETCH_ERROR'
+        success: false,
+        message: "Error fetching tasks",
+        error: "TASK_FETCH_ERROR",
       });
     }
   }
 
+  /**
+   * Get a single task by ID
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
   async getTaskById(req, res) {
     try {
-      const task = await taskService.getTaskById(req.params.id, req.user.userId);
+      const task = await taskService.getTaskById(
+        req.params.id,
+        req.user.userId
+      );
+
       res.json({
-        message: 'Task retrieved successfully',
-        task
+        success: true,
+        message: "Task retrieved successfully",
+        task,
       });
     } catch (error) {
-      if (error.message === 'Task not found') {
+      logger.error(`Task fetch error: ${error.message}`, {
+        requestId: req.requestId,
+      });
+
+      if (error.message === "Task not found" || error.kind === "ObjectId") {
         return res.status(404).json({
-          message: 'Task not found',
-          error: 'TASK_NOT_FOUND'
+          success: false,
+          message: "Task not found",
+          error: "TASK_NOT_FOUND",
         });
       }
-      logger.error(`Task fetch error: ${error.message}`);
+
+      if (error.message === "Unauthorized access") {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to access this task",
+          error: "TASK_ACCESS_DENIED",
+        });
+      }
+
       res.status(500).json({
-        message: 'Error fetching task',
-        error: 'TASK_FETCH_ERROR'
+        success: false,
+        message: "Error fetching task",
+        error: "TASK_FETCH_ERROR",
       });
     }
   }
 
+  /**
+   * Update a task
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
   async updateTask(req, res) {
     try {
       const task = await taskService.updateTask(
@@ -66,72 +135,97 @@ class TaskController {
         req.user.userId,
         req.body
       );
+
+      logger.info(`Task updated: ${req.params.id} by user ${req.user.userId}`);
+
       res.json({
-        message: 'Task updated successfully',
-        task
+        success: true,
+        message: "Task updated successfully",
+        task,
       });
     } catch (error) {
-      if (error.message === 'Task not found') {
+      logger.error(`Task update error: ${error.message}`, {
+        requestId: req.requestId,
+      });
+
+      if (error.message === "Task not found" || error.kind === "ObjectId") {
         return res.status(404).json({
-          message: 'Task not found',
-          error: 'TASK_NOT_FOUND'
+          success: false,
+          message: "Task not found",
+          error: "TASK_NOT_FOUND",
         });
       }
-      logger.error(`Task update error: ${error.message}`);
+
+      if (error.message === "Unauthorized access") {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to update this task",
+          error: "TASK_ACCESS_DENIED",
+        });
+      }
+
+      // Handle validation errors
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          success: false,
+          message: "Validation error",
+          errors: Object.values(error.errors).map((err) => err.message),
+          error: "TASK_VALIDATION_ERROR",
+        });
+      }
+
       res.status(500).json({
-        message: 'Error updating task',
-        error: 'TASK_UPDATE_ERROR'
+        success: false,
+        message: "Error updating task",
+        error: "TASK_UPDATE_ERROR",
       });
     }
   }
 
+  /**
+   * Delete a task
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
   async deleteTask(req, res) {
     try {
       const task = await taskService.deleteTask(req.params.id, req.user.userId);
-      res.json({
-        message: 'Task deleted successfully',
-        task
-      });
-    } catch (error) {
-      if (error.message === 'Task not found') {
-        return res.status(404).json({
-          message: 'Task not found',
-          error: 'TASK_NOT_FOUND'
-        });
-      }
-      logger.error(`Task deletion error: ${error.message}`);
-      res.status(500).json({
-        message: 'Error deleting task',
-        error: 'TASK_DELETION_ERROR'
-      });
-    }
-  }
 
-  async addComment(req, res) {
-    try {
-      const task = await taskService.addComment(
-        req.params.id,
-        req.user.userId,
-        req.body
-      );
+      logger.info(`Task deleted: ${req.params.id} by user ${req.user.userId}`);
+
       res.json({
-        message: 'Comment added successfully',
-        task
+        success: true,
+        message: "Task deleted successfully",
+        task,
       });
     } catch (error) {
-      if (error.message === 'Task not found') {
+      logger.error(`Task deletion error: ${error.message}`, {
+        requestId: req.requestId,
+      });
+
+      if (error.message === "Task not found" || error.kind === "ObjectId") {
         return res.status(404).json({
-          message: 'Task not found',
-          error: 'TASK_NOT_FOUND'
+          success: false,
+          message: "Task not found",
+          error: "TASK_NOT_FOUND",
         });
       }
-      logger.error(`Comment addition error: ${error.message}`);
+
+      if (error.message === "Unauthorized access") {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have permission to delete this task",
+          error: "TASK_ACCESS_DENIED",
+        });
+      }
+
       res.status(500).json({
-        message: 'Error adding comment',
-        error: 'COMMENT_ADDITION_ERROR'
+        success: false,
+        message: "Error deleting task",
+        error: "TASK_DELETION_ERROR",
       });
     }
   }
 }
 
-module.exports = new TaskController(); 
+export default new TaskController();

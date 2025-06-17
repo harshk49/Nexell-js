@@ -1,7 +1,8 @@
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const GitHubStrategy = require("passport-github2").Strategy;
-const User = require("../models/User");
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as GitHubStrategy } from "passport-github2";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 // Serialize user for session
 passport.serializeUser((user, done) => {
@@ -14,9 +15,16 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     done(null, user);
   } catch (err) {
+    logger.error(`Error deserializing user: ${err.message}`);
     done(err, null);
   }
 });
+
+// Get OAuth callback URL based on environment
+const getCallbackUrl = (provider) => {
+  const baseUrl = process.env.API_BASE_URL || "https://nexell-js.onrender.com";
+  return `${baseUrl}/api/auth/${provider}/callback`;
+};
 
 // Google OAuth Strategy
 passport.use(
@@ -24,16 +32,30 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "https://nexell-js.onrender.com/api/auth/google/callback",
+      callbackURL: getCallbackUrl("google"),
       scope: ["profile", "email"],
+      state: true, // Enable state parameter for CSRF protection
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        logger.info(
+          `Google OAuth login attempt for: ${profile.emails[0].value}`
+        );
+
         // Check if user already exists with this Google ID
         let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
-          // User exists, return the user
+          // Update last login time
+          user.lastLogin = new Date();
+          // Record login history
+          user.loginHistory.push({
+            date: new Date(),
+            provider: "google",
+          });
+          await user.save();
+
+          logger.info(`Google user logged in: ${user.email}`);
           return done(null, user);
         }
 
@@ -53,7 +75,17 @@ passport.use(
           if (!user.avatar && profile.photos && profile.photos.length > 0) {
             user.avatar = profile.photos[0].value;
           }
+
+          // Update last login time
+          user.lastLogin = new Date();
+          // Record login history
+          user.loginHistory.push({
+            date: new Date(),
+            provider: "google",
+          });
+
           await user.save();
+          logger.info(`Linked Google account to existing user: ${user.email}`);
           return done(null, user);
         }
 
@@ -73,11 +105,20 @@ passport.use(
               ? profile.photos[0].value
               : "",
           isVerified: true, // Google accounts are pre-verified
+          lastLogin: new Date(),
+          loginHistory: [
+            {
+              date: new Date(),
+              provider: "google",
+            },
+          ],
         });
 
         await newUser.save();
+        logger.info(`New user created via Google OAuth: ${newUser.email}`);
         return done(null, newUser);
       } catch (err) {
+        logger.error(`Google OAuth error: ${err.message}`);
         return done(err, null);
       }
     }
@@ -90,8 +131,9 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: "https://nexell-js.onrender.com/api/auth/github/callback",
+      callbackURL: getCallbackUrl("github"),
       scope: ["user:email"],
+      state: true, // Enable state parameter for CSRF protection
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -99,7 +141,16 @@ passport.use(
         let user = await User.findOne({ githubId: profile.id });
 
         if (user) {
-          // User exists, return the user
+          // Update last login time
+          user.lastLogin = new Date();
+          // Record login history
+          user.loginHistory.push({
+            date: new Date(),
+            provider: "github",
+          });
+          await user.save();
+
+          logger.info(`GitHub user logged in: ${user.email}`);
           return done(null, user);
         }
 
@@ -122,7 +173,17 @@ passport.use(
           if (!user.avatar && profile.photos && profile.photos.length > 0) {
             user.avatar = profile.photos[0].value;
           }
+
+          // Update last login time
+          user.lastLogin = new Date();
+          // Record login history
+          user.loginHistory.push({
+            date: new Date(),
+            provider: "github",
+          });
+
           await user.save();
+          logger.info(`Linked GitHub account to existing user: ${user.email}`);
           return done(null, user);
         }
 
@@ -141,15 +202,24 @@ passport.use(
               ? profile.photos[0].value
               : "",
           isVerified: true, // GitHub accounts are pre-verified
+          lastLogin: new Date(),
+          loginHistory: [
+            {
+              date: new Date(),
+              provider: "github",
+            },
+          ],
         });
 
         await newUser.save();
+        logger.info(`New user created via GitHub OAuth: ${newUser.email}`);
         return done(null, newUser);
       } catch (err) {
+        logger.error(`GitHub OAuth error: ${err.message}`);
         return done(err, null);
       }
     }
   )
 );
 
-module.exports = passport;
+export default passport;

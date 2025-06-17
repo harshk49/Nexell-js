@@ -1,6 +1,13 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
+import logger from "../utils/logger.js";
 
-module.exports = function (req, res, next) {
+/**
+ * Authentication middleware that verifies JWT tokens
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next function
+ */
+export const authenticateUser = (req, res, next) => {
   // Get token from header
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
@@ -35,7 +42,7 @@ module.exports = function (req, res, next) {
     req.user = decoded;
     next();
   } catch (error) {
-    console.error("JWT error:", error);
+    logger.error("JWT error:", error);
 
     // Handle specific JWT errors
     if (error.name === "JsonWebTokenError") {
@@ -57,4 +64,25 @@ module.exports = function (req, res, next) {
       error: "AUTH_SERVER_ERROR",
     });
   }
+};
+
+// Legacy default export for backward compatibility
+const auth = authenticateUser;
+export default auth;
+
+/**
+ * Generate a JWT token for a user
+ * @param {string} userId - The user's ID
+ * @param {Object} additionalData - Additional data to include in the token
+ * @returns {string} The generated JWT token
+ */
+export const generateAuthToken = (userId, additionalData = {}) => {
+  return jwt.sign(
+    {
+      userId,
+      ...additionalData,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+  );
 };
