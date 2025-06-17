@@ -22,7 +22,7 @@ const TimeLogSchema = new Schema(
       default: null,
     },
     duration: {
-      type: Number, // Duration in seconds
+      type: Number, // Duration in minutes
       default: 0,
     },
     isRunning: {
@@ -44,6 +44,57 @@ const TimeLogSchema = new Schema(
         trim: true,
       },
     ],
+    // New fields for enhanced time tracking
+    billable: {
+      type: Boolean,
+      default: true,
+    },
+    hourlyRate: {
+      type: Number,
+      default: 0,
+    },
+    breaks: [
+      {
+        startTime: { type: Date },
+        endTime: { type: Date },
+        duration: { type: Number }, // Duration in minutes
+        reason: { type: String, trim: true },
+      },
+    ],
+    roundedDuration: {
+      type: Number,
+      default: 0,
+    },
+    // For tracking idle time and adjustments
+    idleTime: {
+      type: Number, // Minutes
+      default: 0,
+    },
+    adjustments: [
+      {
+        type: {
+          type: String,
+          enum: ["add", "subtract", "idle", "merge", "split"],
+        },
+        amount: { type: Number }, // Minutes
+        reason: { type: String },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    // For Pomodoro technique tracking
+    pomodoro: {
+      isPomodoro: { type: Boolean, default: false },
+      sessionNumber: { type: Number, default: 0 },
+      completedSessions: { type: Number, default: 0 },
+    },
+    // For automatic tagging and analytics
+    category: {
+      type: String,
+      trim: true,
+    },
+    originalEstimate: {
+      type: Number, // Minutes
+    },
   },
   {
     timestamps: true,

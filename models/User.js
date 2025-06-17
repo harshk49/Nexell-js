@@ -49,6 +49,45 @@ const userSchema = new Schema(
         default: "list",
       },
       noteView: { type: String, enum: ["list", "grid"], default: "list" },
+      timeTracking: {
+        roundingInterval: {
+          type: Number,
+          enum: [1, 5, 10, 15, 30, 60], // minutes
+          default: 1,
+        },
+        idleDetection: {
+          enabled: { type: Boolean, default: true },
+          threshold: { type: Number, default: 10, min: 1, max: 60 }, // minutes
+          action: {
+            type: String,
+            enum: ["prompt", "discard", "keep"],
+            default: "prompt",
+          },
+        },
+        alertsEnabled: { type: Boolean, default: true },
+        longRunningThreshold: { type: Number, default: 8, min: 1, max: 24 }, // hours
+        workingHours: {
+          enabled: { type: Boolean, default: false },
+          start: { type: String, default: "09:00" }, // HH:MM format
+          end: { type: String, default: "17:00" }, // HH:MM format
+          workDays: {
+            type: [Number],
+            default: [1, 2, 3, 4, 5], // Monday=1, Sunday=7
+          },
+        },
+        pomodoroSettings: {
+          enabled: { type: Boolean, default: false },
+          workDuration: { type: Number, default: 25, min: 1, max: 60 }, // minutes
+          breakDuration: { type: Number, default: 5, min: 1, max: 30 }, // minutes
+          longBreakDuration: { type: Number, default: 15, min: 1, max: 60 }, // minutes
+          sessionsBeforeLongBreak: {
+            type: Number,
+            default: 4,
+            min: 1,
+            max: 10,
+          },
+        },
+      },
     },
 
     // Activity Tracking

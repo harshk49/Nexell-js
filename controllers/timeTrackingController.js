@@ -242,6 +242,308 @@ class TimeTrackingController {
       });
     }
   }
+
+  /**
+   * Get user's time tracking preferences
+   */
+  async getUserTimeTrackingPreferences(req, res) {
+    try {
+      const preferences =
+        await timeTrackingService.getUserTimeTrackingPreferences(
+          req.user.userId
+        );
+
+      res.json({
+        preferences,
+      });
+    } catch (error) {
+      logger.error(`Get time tracking preferences error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to retrieve time tracking preferences",
+        error: "PREFERENCES_RETRIEVAL_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Update user's time tracking preferences
+   */
+  async updateTimeTrackingPreferences(req, res) {
+    try {
+      const { preferences } = req.body;
+
+      const updatedPreferences =
+        await timeTrackingService.updateTimeTrackingPreferences(
+          req.user.userId,
+          preferences
+        );
+
+      res.json({
+        message: "Time tracking preferences updated successfully",
+        preferences: updatedPreferences,
+      });
+    } catch (error) {
+      logger.error(`Update time tracking preferences error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to update time tracking preferences",
+        error: "PREFERENCES_UPDATE_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Handle idle time detection
+   */
+  async handleIdleTime(req, res) {
+    try {
+      const { timeLogId, idleTimeMinutes, action } = req.body;
+
+      let result;
+      switch (action) {
+        case "keep":
+          result = await timeTrackingService.keepIdleTime(
+            req.user.userId,
+            timeLogId,
+            idleTimeMinutes
+          );
+          break;
+        case "discard":
+          result = await timeTrackingService.discardIdleTime(
+            req.user.userId,
+            timeLogId,
+            idleTimeMinutes
+          );
+          break;
+        case "stop":
+          result = await timeTrackingService.stopTimerWithIdleAdjustment(
+            req.user.userId,
+            timeLogId,
+            idleTimeMinutes
+          );
+          break;
+        default:
+          throw new Error("Invalid idle time action");
+      }
+
+      res.json({
+        message: `Idle time handled successfully (${action})`,
+        timeLog: result,
+      });
+    } catch (error) {
+      logger.error(`Handle idle time error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to handle idle time",
+        error: "IDLE_TIME_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Start a Pomodoro session
+   */
+  async startPomodoroSession(req, res) {
+    try {
+      const { taskId, pomodoroSettings } = req.body;
+
+      const session = await timeTrackingService.startPomodoroSession(
+        req.user.userId,
+        taskId,
+        pomodoroSettings
+      );
+
+      res.status(201).json({
+        message: "Pomodoro session started successfully",
+        session,
+      });
+    } catch (error) {
+      logger.error(`Start Pomodoro session error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to start Pomodoro session",
+        error: "POMODORO_START_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Complete current Pomodoro cycle
+   */
+  async completePomodoroSession(req, res) {
+    try {
+      const { timeLogId, completed } = req.body;
+
+      const session = await timeTrackingService.completePomodoroSession(
+        req.user.userId,
+        timeLogId,
+        completed
+      );
+
+      res.json({
+        message: "Pomodoro session updated successfully",
+        session,
+      });
+    } catch (error) {
+      logger.error(`Complete Pomodoro session error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to update Pomodoro session",
+        error: "POMODORO_UPDATE_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Start a break
+   */
+  async startBreak(req, res) {
+    try {
+      const { timeLogId, breakType } = req.body;
+
+      const result = await timeTrackingService.startBreak(
+        req.user.userId,
+        timeLogId,
+        breakType
+      );
+
+      res.status(201).json({
+        message: "Break started successfully",
+        break: result,
+      });
+    } catch (error) {
+      logger.error(`Start break error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to start break",
+        error: "BREAK_START_ERROR",
+      });
+    }
+  }
+
+  /**
+   * End a break
+   */
+  async endBreak(req, res) {
+    try {
+      const { timeLogId, breakId } = req.body;
+
+      const result = await timeTrackingService.endBreak(
+        req.user.userId,
+        timeLogId,
+        breakId
+      );
+
+      res.json({
+        message: "Break ended successfully",
+        break: result,
+      });
+    } catch (error) {
+      logger.error(`End break error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to end break",
+        error: "BREAK_END_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Split a time entry
+   */
+  async splitTimeEntry(req, res) {
+    try {
+      const { timeLogId, splitTime } = req.body;
+
+      const result = await timeTrackingService.splitTimeEntry(
+        req.user.userId,
+        timeLogId,
+        new Date(splitTime)
+      );
+
+      res.status(201).json({
+        message: "Time entry split successfully",
+        timeLogs: result,
+      });
+    } catch (error) {
+      logger.error(`Split time entry error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to split time entry",
+        error: "TIME_ENTRY_SPLIT_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Merge time entries
+   */
+  async mergeTimeEntries(req, res) {
+    try {
+      const { timeLogIds } = req.body;
+
+      const result = await timeTrackingService.mergeTimeEntries(
+        req.user.userId,
+        timeLogIds
+      );
+
+      res.status(200).json({
+        message: "Time entries merged successfully",
+        timeLog: result,
+      });
+    } catch (error) {
+      logger.error(`Merge time entries error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to merge time entries",
+        error: "TIME_ENTRIES_MERGE_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Duplicate a time entry
+   */
+  async duplicateTimeEntry(req, res) {
+    try {
+      const { timeLogId, adjustments } = req.body;
+
+      const result = await timeTrackingService.duplicateTimeEntry(
+        req.user.userId,
+        timeLogId,
+        adjustments
+      );
+
+      res.status(201).json({
+        message: "Time entry duplicated successfully",
+        timeLog: result,
+      });
+    } catch (error) {
+      logger.error(`Duplicate time entry error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to duplicate time entry",
+        error: "TIME_ENTRY_DUPLICATE_ERROR",
+      });
+    }
+  }
+
+  /**
+   * Bulk update time entries
+   */
+  async bulkUpdateTimeEntries(req, res) {
+    try {
+      const { timeLogIds, updates } = req.body;
+
+      const results = await timeTrackingService.bulkUpdateTimeEntries(
+        req.user.userId,
+        timeLogIds,
+        updates
+      );
+
+      res.json({
+        message: "Time entries updated successfully",
+        timeLogs: results,
+      });
+    } catch (error) {
+      logger.error(`Bulk update time entries error: ${error.message}`);
+      res.status(500).json({
+        message: "Failed to update time entries",
+        error: "BULK_UPDATE_ERROR",
+      });
+    }
+  }
 }
 
 module.exports = new TimeTrackingController();

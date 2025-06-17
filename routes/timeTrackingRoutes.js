@@ -134,4 +134,237 @@ router.delete(
   }
 );
 
+/**
+ * @route   GET /api/time-tracking/preferences
+ * @desc    Get user's time tracking preferences
+ * @access  Private
+ */
+router.get("/preferences", async (req, res) => {
+  await timeTrackingController.getUserTimeTrackingPreferences(req, res);
+});
+
+/**
+ * @route   PUT /api/time-tracking/preferences
+ * @desc    Update user's time tracking preferences
+ * @access  Private
+ */
+router.put(
+  "/preferences",
+  [
+    body("preferences").isObject().withMessage("Preferences must be an object"),
+    body("preferences.timeTracking").optional().isObject(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.updateTimeTrackingPreferences(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/idle
+ * @desc    Handle idle time detection
+ * @access  Private
+ */
+router.post(
+  "/idle",
+  [
+    body("timeLogId").isMongoId().withMessage("Invalid time log ID"),
+    body("idleTimeMinutes")
+      .isNumeric()
+      .withMessage("Idle time must be a number"),
+    body("action")
+      .isIn(["keep", "discard", "stop"])
+      .withMessage("Invalid idle time action"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.handleIdleTime(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/pomodoro/start
+ * @desc    Start a Pomodoro session
+ * @access  Private
+ */
+router.post(
+  "/pomodoro/start",
+  [
+    body("taskId").isMongoId().withMessage("Invalid task ID"),
+    body("pomodoroSettings").optional().isObject(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.startPomodoroSession(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/pomodoro/complete
+ * @desc    Complete a Pomodoro session
+ * @access  Private
+ */
+router.post(
+  "/pomodoro/complete",
+  [
+    body("timeLogId").isMongoId().withMessage("Invalid time log ID"),
+    body("completed")
+      .isBoolean()
+      .withMessage("Completed status must be a boolean"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.completePomodoroSession(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/break/start
+ * @desc    Start a break
+ * @access  Private
+ */
+router.post(
+  "/break/start",
+  [
+    body("timeLogId").isMongoId().withMessage("Invalid time log ID"),
+    body("breakType")
+      .isIn(["short", "long"])
+      .withMessage("Break type must be 'short' or 'long'"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.startBreak(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/break/end
+ * @desc    End a break
+ * @access  Private
+ */
+router.post(
+  "/break/end",
+  [
+    body("timeLogId").isMongoId().withMessage("Invalid time log ID"),
+    body("breakId").isMongoId().withMessage("Invalid break ID"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.endBreak(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/time-entries/:timeLogId/split
+ * @desc    Split a time entry
+ * @access  Private
+ */
+router.post(
+  "/time-entries/:timeLogId/split",
+  [
+    param("timeLogId").isMongoId().withMessage("Invalid time log ID"),
+    body("splitTime")
+      .isISO8601()
+      .withMessage("Split time must be a valid ISO 8601 date"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    req.body.timeLogId = req.params.timeLogId;
+    await timeTrackingController.splitTimeEntry(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/time-entries/merge
+ * @desc    Merge multiple time entries
+ * @access  Private
+ */
+router.post(
+  "/time-entries/merge",
+  [
+    body("timeLogIds").isArray().withMessage("Time log IDs must be an array"),
+    body("timeLogIds.*").isMongoId().withMessage("Invalid time log ID"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.mergeTimeEntries(req, res);
+  }
+);
+
+/**
+ * @route   POST /api/time-tracking/time-entries/:timeLogId/duplicate
+ * @desc    Duplicate a time entry
+ * @access  Private
+ */
+router.post(
+  "/time-entries/:timeLogId/duplicate",
+  [
+    param("timeLogId").isMongoId().withMessage("Invalid time log ID"),
+    body("adjustments").optional().isObject(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    req.body.timeLogId = req.params.timeLogId;
+    await timeTrackingController.duplicateTimeEntry(req, res);
+  }
+);
+
+/**
+ * @route   PUT /api/time-tracking/time-entries/bulk
+ * @desc    Bulk update time entries
+ * @access  Private
+ */
+router.put(
+  "/time-entries/bulk",
+  [
+    body("timeLogIds").isArray().withMessage("Time log IDs must be an array"),
+    body("timeLogIds.*").isMongoId().withMessage("Invalid time log ID"),
+    body("updates").isObject().withMessage("Updates must be an object"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await timeTrackingController.bulkUpdateTimeEntries(req, res);
+  }
+);
+
 module.exports = router;

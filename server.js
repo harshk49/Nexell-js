@@ -125,6 +125,8 @@ const timeTrackingRoutes = require("./routes/timeTrackingRoutes");
 const organizationRoutes = require("./routes/organizationRoutes");
 const invitationRoutes = require("./routes/invitationRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const integrationRoutes = require("./routes/integrationRoutes");
+const permissionRoutes = require("./routes/permissionRoutes");
 const authMiddleware = require("./middleware/auth");
 
 // Mount Routes
@@ -136,6 +138,8 @@ app.use("/api/time-tracking", timeTrackingRoutes);
 app.use("/api/organizations", organizationRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/integrations", integrationRoutes);
+app.use("/api/permissions", permissionRoutes);
 
 // Health Check and Ping Routes
 app.get("/health", (req, res) => {
