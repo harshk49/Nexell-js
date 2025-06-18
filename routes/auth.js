@@ -1,7 +1,8 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const passport = require("passport");
-const User = require("../models/User");
+import express from "express";
+import jwt from "jsonwebtoken";
+import passport from "passport";
+
+import User from "../models/User.js";
 const router = express.Router();
 
 // Debug middleware for auth routes
@@ -291,4 +292,4 @@ router.post("/logout", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

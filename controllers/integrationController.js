@@ -1,5 +1,5 @@
-const integrationService = require("../services/integrationService");
-const logger = require("../utils/logger");
+import integrationService from "../services/integrationService.js";
+import logger from "../utils/logger.js";
 
 class IntegrationController {
   /**
@@ -176,4 +176,4 @@ class IntegrationController {
   }
 }
 
-module.exports = new IntegrationController();
+export default new IntegrationController();

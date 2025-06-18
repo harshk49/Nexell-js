@@ -1,35 +1,36 @@
-import "dotenv/config";
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import compression from "compression";
-import cookieParser from "cookie-parser";
-import mongoSanitize from "express-mongo-sanitize";
-import rateLimit from "express-rate-limit";
-import xss from "xss-clean";
-import hpp from "hpp";
+// Built-in modules
 import path from "path";
 import { fileURLToPath } from "url";
+
+// External packages
+import "dotenv/config";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import mongoSanitize from "express-mongo-sanitize";
+import ExpressRateLimit from "express-rate-limit";
 import session from "express-session";
+import helmet from "helmet";
+import hpp from "hpp";
+import mongoose from "mongoose";
+import morgan from "morgan";
+import xss from "xss-clean";
+
+// Internal imports
 import passport from "./config/passport.js";
-import logger from "./utils/logger.js";
-
-// Import middleware
 import { requestIdMiddleware } from "./middleware/requestId.js";
-
-// Import Routes
 import authRoutes from "./routes/auth.js";
-import noteRoutes from "./routes/noteRoutes.js";
-import taskRoutes from "./routes/taskRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import timeTrackingRoutes from "./routes/timeTrackingRoutes.js";
-import organizationRoutes from "./routes/organizationRoutes.js";
-import invitationRoutes from "./routes/invitationRoutes.js";
-import reportRoutes from "./routes/reportRoutes.js";
 import integrationRoutes from "./routes/integrationRoutes.js";
+import invitationRoutes from "./routes/invitationRoutes.js";
+import noteRoutes from "./routes/noteRoutes.js";
+import organizationRoutes from "./routes/organizationRoutes.js";
 import permissionRoutes from "./routes/permissionRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import timeTrackingRoutes from "./routes/timeTrackingRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import logger from "./utils/logger.js";
 
 // Get current file directory (replacement for __dirname in ESM)
 const __filename = fileURLToPath(import.meta.url);
@@ -89,7 +90,7 @@ app.use(compression()); // Compress responses
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev")); // Logs HTTP requests
 
 // Rate Limiting
-const limiter = rateLimit({
+const limiter = ExpressRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === "production" ? 100 : 1000, // Different limits for prod/dev
   message: {
@@ -104,7 +105,7 @@ const limiter = rateLimit({
 app.use("/api/", limiter);
 
 // Stricter rate limiting for auth routes
-const authLimiter = rateLimit({
+const authLimiter = ExpressRateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // 5 attempts per hour
   message: {
@@ -218,7 +219,7 @@ app.use((req, res) => {
 });
 
 // Global Error Handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error("Error:", err);
 
   // Default error

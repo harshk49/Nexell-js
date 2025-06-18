@@ -1,10 +1,12 @@
-const express = require("express");
+import express from "express";
+
+import invitationController from "../controllers/invitationController.js";
+import membershipController from "../controllers/membershipController.js";
+import organizationController from "../controllers/organizationController.js";
+import { authenticateUser as auth } from "../middleware/auth.js";
+import { checkRole } from "../middleware/permissions.js";
+
 const router = express.Router();
-const organizationController = require("../controllers/organizationController");
-const membershipController = require("../controllers/membershipController");
-const invitationController = require("../controllers/invitationController");
-const { auth } = require("../middleware/auth");
-const { checkRole, checkPermission } = require("../middleware/permissions");
 
 // Organization routes
 router.post("/", auth, organizationController.createOrganization);
@@ -92,4 +94,4 @@ router.post(
   invitationController.resendInvitation
 );
 
-module.exports = router;
+export default router;

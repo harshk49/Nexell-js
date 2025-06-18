@@ -1,7 +1,9 @@
-const express = require("express");
-const { body, validationResult } = require("express-validator");
-const Task = require("../models/Task"); // Ensure this model exists
-const authMiddleware = require("../middleware/auth"); // Auth middleware for protected routes
+import express from "express";
+import { body, validationResult } from "express-validator";
+
+import authMiddleware from "../middleware/auth.js"; // Auth middleware for protected routes
+import Task from "../models/Task.js"; // Ensure this model exists
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -10,7 +12,8 @@ const normalizeStatusMiddleware = (req, res, next) => {
   if (req.body && req.body.status) {
     // Convert any status with hyphens (e.g., "in-progress") to spaces ("in progress")
     req.body.status = req.body.status.replace(/-/g, " ");
-    console.log(
+    // Use logger instead of console.log
+    logger.info(
       `[Status Normalization] Normalized status to: ${req.body.status}`
     );
   }
@@ -340,4 +343,4 @@ router.put(
   }
 );
 
-module.exports = router;
+export default router;

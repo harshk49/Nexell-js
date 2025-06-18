@@ -1,10 +1,11 @@
-const mongoose = require("mongoose");
-const TimeLog = require("../models/TimeLog");
-const Task = require("../models/Task");
-const User = require("../models/User");
-const Organization = require("../models/Organization");
-const Membership = require("../models/Membership");
-const logger = require("../utils/logger");
+import mongoose from "mongoose";
+
+import Membership from "../models/Membership.js";
+import Organization from "../models/Organization.js";
+import Task from "../models/Task.js";
+import TimeLog from "../models/TimeLog.js";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 class ReportService {
   /**
@@ -496,7 +497,7 @@ class ReportService {
       }
 
       // Build the pipeline
-      let pipeline = [{ $match: matchQuery }, { $group: groupByConfig }];
+      const pipeline = [{ $match: matchQuery }, { $group: groupByConfig }];
 
       // Sort appropriately based on group by
       if (
@@ -689,14 +690,20 @@ class ReportService {
         {
           $match: {
             organization: mongoose.Types.ObjectId(organizationId),
-            $or: [
-              { owner: { $in: memberIds } },
-              { organization: mongoose.Types.ObjectId(organizationId) },
-            ],
-            $or: [
-              { createdAt: { $gte: start, $lte: end } },
-              { completedAt: { $gte: start, $lte: end } },
-              { updatedAt: { $gte: start, $lte: end } },
+            $and: [
+              {
+                $or: [
+                  { owner: { $in: memberIds } },
+                  { organization: mongoose.Types.ObjectId(organizationId) },
+                ],
+              },
+              {
+                $or: [
+                  { createdAt: { $gte: start, $lte: end } },
+                  { completedAt: { $gte: start, $lte: end } },
+                  { updatedAt: { $gte: start, $lte: end } },
+                ],
+              }
             ],
           },
         },
@@ -1065,7 +1072,7 @@ class ReportService {
     try {
       let csvContent = "";
       let headers = [];
-      let rows = [];
+      const rows = [];
 
       // Format data based on report type
       switch (reportType) {
@@ -1188,4 +1195,4 @@ class ReportService {
   }
 }
 
-module.exports = new ReportService();
+export default new ReportService();

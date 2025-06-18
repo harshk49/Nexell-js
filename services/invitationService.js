@@ -1,9 +1,10 @@
-const Invitation = require("../models/Invitation");
-const Organization = require("../models/Organization");
-const Membership = require("../models/Membership");
-const User = require("../models/User");
-const logger = require("../utils/logger");
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
+import Invitation from "../models/Invitation.js";
+import Membership from "../models/Membership.js";
+import Organization from "../models/Organization.js";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 // Email service for sending invitations (mock implementation)
 const sendInvitationEmail = async (
@@ -12,7 +13,7 @@ const sendInvitationEmail = async (
   organizationName,
   role,
   token,
-  message
+  _message
 ) => {
   // In a real implementation, this would use nodemailer or similar to send an email
   logger.info(
@@ -362,4 +363,4 @@ class InvitationService {
   }
 }
 
-module.exports = new InvitationService();
+export default new InvitationService();

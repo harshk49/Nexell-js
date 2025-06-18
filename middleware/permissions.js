@@ -1,7 +1,8 @@
-const mongoose = require("mongoose");
-const User = require("../models/User");
-const Membership = require("../models/Membership");
-const logger = require("../utils/logger");
+import mongoose from "mongoose";
+
+import Membership from "../models/Membership.js";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 /**
  * Middleware to check if a user has a specific role in an organization
@@ -266,7 +267,7 @@ const verifyResourceAccess = (Model, permissionName) => {
   };
 };
 
-module.exports = {
+export {
   checkRole,
   checkPermission,
   requireOrganization,

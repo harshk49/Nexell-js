@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const MembershipSchema = new Schema(
@@ -103,4 +103,4 @@ MembershipSchema.index({ user: 1, organization: 1 }, { unique: true });
 MembershipSchema.index({ organization: 1, role: 1 });
 MembershipSchema.index({ organization: 1, status: 1 });
 
-module.exports = mongoose.model("Membership", MembershipSchema);
+export default mongoose.model("Membership", MembershipSchema);

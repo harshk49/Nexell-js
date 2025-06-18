@@ -1,6 +1,7 @@
+import mongoose from "mongoose";
+
 import Note from "../models/Note.js";
 import logger from "../utils/logger.js";
-import mongoose from "mongoose";
 import { sanitizeHtml } from "../utils/sanitizers.js";
 
 class NoteService {

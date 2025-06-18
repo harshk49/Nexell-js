@@ -1,6 +1,7 @@
-const mongoose = require("mongoose");
+import crypto from "crypto";
+
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
-const crypto = require("crypto");
 
 const InvitationSchema = new Schema(
   {
@@ -71,4 +72,4 @@ InvitationSchema.index({ token: 1 }, { unique: true });
 InvitationSchema.index({ organization: 1, status: 1 });
 InvitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for auto-cleanup
 
-module.exports = mongoose.model("Invitation", InvitationSchema);
+export default mongoose.model("Invitation", InvitationSchema);

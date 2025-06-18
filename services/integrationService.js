@@ -1,9 +1,9 @@
-const User = require("../models/User");
-const Task = require("../models/Task");
-const TimeLog = require("../models/TimeLog");
-const Project = require("../models/Project");
-const logger = require("../utils/logger");
-const { formatDuration } = require("../utils/timeUtils");
+import Project from "../models/Project.js";
+import Task from "../models/Task.js";
+import TimeLog from "../models/TimeLog.js";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
+import { formatDuration } from "../utils/timeUtils.js";
 
 class IntegrationService {
   /**
@@ -766,4 +766,4 @@ class IntegrationService {
   }
 }
 
-module.exports = new IntegrationService();
+export default new IntegrationService();

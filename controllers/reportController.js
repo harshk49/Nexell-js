@@ -1,5 +1,5 @@
-const reportService = require("../services/reportService");
-const logger = require("../utils/logger");
+import reportService from "../services/reportService.js";
+import logger from "../utils/logger.js";
 
 class ReportController {
   /**
@@ -124,7 +124,7 @@ class ReportController {
           });
           break;
 
-        case "productivity":
+        case "productivity": {
           const productivityReport =
             await reportService.getOrganizationProductivityReport(
               req.params.organizationId || req.organizationId,
@@ -133,6 +133,7 @@ class ReportController {
             );
           reportData = productivityReport.memberStats;
           break;
+        }
 
         default:
           return res.status(400).json({
@@ -170,4 +171,4 @@ class ReportController {
   }
 }
 
-module.exports = new ReportController();
+export default new ReportController();

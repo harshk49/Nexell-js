@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const OrganizationSchema = new Schema(
@@ -86,4 +86,4 @@ OrganizationSchema.virtual("memberCount").get(async function () {
 OrganizationSchema.index({ name: 1 });
 OrganizationSchema.index({ createdBy: 1 });
 
-module.exports = mongoose.model("Organization", OrganizationSchema);
+export default mongoose.model("Organization", OrganizationSchema);

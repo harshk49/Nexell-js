@@ -1,7 +1,7 @@
-const express = require("express");
-const { query, param, body, validationResult } = require("express-validator");
-const integrationController = require("../controllers/integrationController");
-const authMiddleware = require("../middleware/auth");
+import express from "express";
+import { query, param, body, validationResult } from "express-validator";
+import integrationController from "../controllers/integrationController.js";
+import { authenticateUser as authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -193,4 +193,4 @@ router.put(
   }
 );
 
-module.exports = router;
+export default router;

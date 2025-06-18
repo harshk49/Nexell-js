@@ -1,5 +1,5 @@
-const membershipService = require("../services/membershipService");
-const logger = require("../utils/logger");
+import membershipService from "../services/membershipService.js";
+import logger from "../utils/logger.js";
 
 class MembershipController {
   /**
@@ -195,4 +195,4 @@ class MembershipController {
   }
 }
 
-module.exports = new MembershipController();
+export default new MembershipController();

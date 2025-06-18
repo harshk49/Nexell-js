@@ -1,10 +1,11 @@
-import request from "supertest";
-import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import app from "../server.js";
+import mongoose from "mongoose";
+import request from "supertest";
+
 import Task from "../models/Task.js";
 import User from "../models/User.js";
-import jwt from "jsonwebtoken";
+import app from "../server.js";
 
 describe("Task API Tests", () => {
   let mongoServer;

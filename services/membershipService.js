@@ -1,7 +1,7 @@
-const Membership = require("../models/Membership");
-const Organization = require("../models/Organization");
-const User = require("../models/User");
-const logger = require("../utils/logger");
+import Membership from "../models/Membership.js";
+import Organization from "../models/Organization.js";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 class MembershipService {
   /**
@@ -362,4 +362,4 @@ class MembershipService {
   }
 }
 
-module.exports = new MembershipService();
+export default new MembershipService();

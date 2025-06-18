@@ -1,5 +1,5 @@
-const invitationService = require("../services/invitationService");
-const logger = require("../utils/logger");
+import invitationService from "../services/invitationService.js";
+import logger from "../utils/logger.js";
 
 class InvitationController {
   /**
@@ -202,4 +202,4 @@ class InvitationController {
   }
 }
 
-module.exports = new InvitationController();
+export default new InvitationController();

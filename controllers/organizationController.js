@@ -1,5 +1,5 @@
-const organizationService = require("../services/organizationService");
-const logger = require("../utils/logger");
+import organizationService from "../services/organizationService.js";
+import logger from "../utils/logger.js";
 
 class OrganizationController {
   /**
@@ -185,4 +185,4 @@ class OrganizationController {
   }
 }
 
-module.exports = new OrganizationController();
+export default new OrganizationController();

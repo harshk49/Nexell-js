@@ -1,7 +1,8 @@
-import noteService from "../services/noteService.js";
-import logger from "../utils/logger.js";
 import { StatusCodes } from "http-status-codes";
+
+import noteService from "../services/noteService.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import logger from "../utils/logger.js";
 
 class NoteController {
   async createNote(req, res) {

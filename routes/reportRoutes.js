@@ -1,8 +1,10 @@
-const express = require("express");
+import express from "express";
+
+import reportController from "../controllers/reportController.js";
+import { authenticateUser as auth } from "../middleware/auth.js";
+import { checkRole } from "../middleware/permissions.js";
+
 const router = express.Router();
-const reportController = require("../controllers/reportController");
-const { auth } = require("../middleware/auth");
-const { checkRole } = require("../middleware/permissions");
 
 // Time tracking reports
 router.get("/time-tracking", auth, reportController.getTimeTrackingReport);
@@ -21,4 +23,4 @@ router.get(
 // Export reports to CSV
 router.get("/export/:reportType", auth, reportController.exportReportToCsv);
 
-module.exports = router;
+export default router;

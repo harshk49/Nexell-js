@@ -1,10 +1,11 @@
-import request from "supertest";
-import mongoose from "mongoose";
 import { jest } from "@jest/globals";
-import app from "../server.js";
-import User from "../models/User.js";
-import Note from "../models/Note.js";
+import mongoose from "mongoose";
+import request from "supertest";
+
 import { generateAuthToken } from "../middleware/auth.js";
+import Note from "../models/Note.js";
+import User from "../models/User.js";
+import app from "../server.js";
 
 // Mock logger to prevent console clutter during tests
 jest.mock("../utils/logger.js", () => ({
@@ -114,7 +115,8 @@ describe("Notes API", () => {
         content: "This should not be created",
       };
 
-      await request(app).post("/api/notes").send(noteData).expect(401);
+      const response = await request(app).post("/api/notes").send(noteData);
+      expect(response.status).toBe(401);
     });
   });
 
@@ -265,11 +267,12 @@ describe("Notes API", () => {
         content: "This should fail",
       };
 
-      await request(app)
+      const response = await request(app)
         .put(`/api/notes/${testNote._id}`)
         .set("Authorization", `Bearer ${secondUserToken}`)
-        .send(updateData)
-        .expect(404); // Should be 404 (not found) rather than 403 to prevent enumeration
+        .send(updateData);
+
+      expect(response.status).toBe(404); // Should be 404 (not found) rather than 403 to prevent enumeration
     });
   });
 

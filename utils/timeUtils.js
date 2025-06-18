@@ -58,9 +58,8 @@ const isWithinWorkingHours = (workingHours) => {
  * @param {number} hourlyRate - Rate per hour
  * @returns {number} - Billable amount
  */
-const calculateBillableAmount = (durationMinutes, hourlyRate) => {
-  return (durationMinutes / 60) * hourlyRate;
-};
+const calculateBillableAmount = (durationMinutes, hourlyRate) =>
+  (durationMinutes / 60) * hourlyRate;
 
 /**
  * Format duration in human-readable format
@@ -136,7 +135,7 @@ const getPomodoroSessionInfo = (settings, completedSessions) => {
   };
 };
 
-module.exports = {
+export {
   roundTimeToInterval,
   isWithinWorkingHours,
   calculateBillableAmount,
