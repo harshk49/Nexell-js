@@ -1,5 +1,5 @@
-const permissionService = require("../services/permissionService");
-const logger = require("../utils/logger");
+import permissionService from "../services/permissionService.js";
+import logger from "../utils/logger.js";
 
 class PermissionController {
   /**
@@ -380,4 +380,4 @@ class PermissionController {
   }
 }
 
-module.exports = new PermissionController();
+export default new PermissionController();

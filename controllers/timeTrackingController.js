@@ -1,5 +1,5 @@
-const timeTrackingService = require("../services/timeTrackingService");
-const logger = require("../utils/logger");
+import timeTrackingService from "../services/timeTrackingService.js";
+import logger from "../utils/logger.js";
 
 class TimeTrackingController {
   /**
@@ -546,4 +546,4 @@ class TimeTrackingController {
   }
 }
 
-module.exports = new TimeTrackingController();
+export default new TimeTrackingController();

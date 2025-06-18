@@ -1,11 +1,12 @@
-const CustomRole = require("../models/CustomRole");
-const Membership = require("../models/Membership");
-const Organization = require("../models/Organization");
-const User = require("../models/User");
-const Project = require("../models/Project");
-const Team = require("../models/Team");
-const PermissionTemplate = require("../models/PermissionTemplate");
-const logger = require("../utils/logger");
+import CustomRole from "../models/CustomRole.js";
+import Membership from "../models/Membership.js";
+import Organization from "../models/Organization.js";
+import PermissionTemplate from "../models/PermissionTemplate.js";
+import Project from "../models/Project.js";
+import Team from "../models/Team.js";
+import User from "../models/User.js";
+
+import logger from "../utils/logger.js";
 
 class PermissionService {
   /**
@@ -771,4 +772,4 @@ class PermissionService {
   }
 }
 
-module.exports = new PermissionService();
+export default new PermissionService();

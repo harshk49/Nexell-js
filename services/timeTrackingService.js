@@ -1,15 +1,16 @@
-const TimeLog = require("../models/TimeLog");
-const Task = require("../models/Task");
-const User = require("../models/User");
-const logger = require("../utils/logger");
-const {
+import Task from "../models/Task.js";
+import TimeLog from "../models/TimeLog.js";
+import User from "../models/User.js";
+
+import logger from "../utils/logger.js";
+import {
   roundTimeToInterval,
   isWithinWorkingHours,
   calculateBillableAmount,
   formatDuration,
   isLongRunningTimer,
   getPomodoroSessionInfo,
-} = require("../utils/timeUtils");
+} from "../utils/timeUtils.js";
 
 class TimeTrackingService {
   /**
@@ -1010,4 +1011,4 @@ class TimeTrackingService {
   }
 }
 
-module.exports = new TimeTrackingService();
+export default new TimeTrackingService();

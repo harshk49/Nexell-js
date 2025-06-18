@@ -1,10 +1,12 @@
-const Organization = require("../models/Organization");
-const Membership = require("../models/Membership");
-const Invitation = require("../models/Invitation");
-const User = require("../models/User");
-const Task = require("../models/Task");
-const Note = require("../models/Note");
-const logger = require("../utils/logger");
+import mongoose from "mongoose";
+
+import Invitation from "../models/Invitation.js";
+import Membership from "../models/Membership.js";
+import Note from "../models/Note.js";
+import Organization from "../models/Organization.js";
+import Task from "../models/Task.js";
+import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 class OrganizationService {
   /**
@@ -305,4 +307,5 @@ class OrganizationService {
   }
 }
 
-module.exports = new OrganizationService();
+const organizationService = new OrganizationService();
+export default organizationService;

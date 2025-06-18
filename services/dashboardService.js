@@ -1,6 +1,7 @@
-const Dashboard = require("../models/Dashboard");
-const reportService = require("./reportService");
-const logger = require("../utils/logger");
+import Dashboard from "../models/Dashboard.js";
+
+import logger from "../utils/logger.js";
+import reportService from "./reportService.js";
 
 class DashboardService {
   /**
@@ -416,4 +417,4 @@ class DashboardService {
   }
 }
 
-module.exports = new DashboardService();
+export default new DashboardService();

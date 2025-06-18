@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+
 import logger from "../utils/logger.js";
 
 /**
@@ -66,9 +67,8 @@ export const authenticateUser = (req, res, next) => {
   }
 };
 
-// Legacy default export for backward compatibility
-const auth = authenticateUser;
-export default auth;
+// Export authenticateUser as the default export
+export default authenticateUser;
 
 /**
  * Generate a JWT token for a user
@@ -76,8 +76,8 @@ export default auth;
  * @param {Object} additionalData - Additional data to include in the token
  * @returns {string} The generated JWT token
  */
-export const generateAuthToken = (userId, additionalData = {}) => {
-  return jwt.sign(
+export const generateAuthToken = (userId, additionalData = {}) =>
+  jwt.sign(
     {
       userId,
       ...additionalData,
@@ -85,4 +85,3 @@ export const generateAuthToken = (userId, additionalData = {}) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
-};

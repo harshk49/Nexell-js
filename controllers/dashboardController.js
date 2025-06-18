@@ -1,5 +1,5 @@
-const dashboardService = require("../services/dashboardService");
-const logger = require("../utils/logger");
+import dashboardService from "../services/dashboardService.js";
+import logger from "../utils/logger.js";
 
 class DashboardController {
   /**
@@ -355,4 +355,4 @@ class DashboardController {
   }
 }
 
-module.exports = new DashboardController();
+export default new DashboardController();
